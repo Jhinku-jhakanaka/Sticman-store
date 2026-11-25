@@ -1,0 +1,2693 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SOHAN STORE ARCADE — 3D Stickman Play-to-Buy Gaming Boutique</title>
+    <meta name="description" content="Dress Unit-01 in 3D, beat the interactive runway clothing & pose challenge to unlock checkout, and buy the exact outfit Unit-01 is wearing at SOHAN STORE ARCADE.">
+    <meta name="theme-color" content="#09090b">
+    <meta property="og:title" content="SOHAN STORE ARCADE — 3D Stickman Play-to-Buy Boutique">
+    <meta property="og:description" content="Interactive 3D stickman clothing game & live merch store. Dress Unit-01, beat the runway challenge, and own the exact fit.">
+    <meta property="og:type" content="website">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2309090b'/%3E%3Ccircle cx='32' cy='20' r='8' fill='%23ccff00'/%3E%3Cpath d='M32 30v16M20 34l12 4 12-4M24 54l8-10 8 10' stroke='%23ccff00' stroke-width='5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E">
+
+    <!-- Google Fonts: Inter & Space Grotesk -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Space Grotesk', 'sans-serif']
+                    },
+                    colors: {
+                        volt: '#ccff00'
+                    }
+                }
+            }
+        };
+    </script>
+
+    <!-- Three.js r128 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #09090b;
+            color: #f4f4f5;
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+
+        body.light-studio {
+            background-color: #f4f4f5;
+            color: #18181b;
+        }
+
+        #canvas-container {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            cursor: grab;
+        }
+
+        #canvas-container:active {
+            cursor: grabbing;
+        }
+
+        #canvas-container canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .glass-card {
+            background: rgba(18, 18, 22, 0.72);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+            transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+        }
+
+        body.light-studio .glass-card {
+            background: rgba(255, 255, 255, 0.78);
+            border: 1px solid rgba(24, 24, 27, 0.12);
+            box-shadow: 0 20px 45px rgba(24, 24, 27, 0.1);
+        }
+
+        .swatch-btn {
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .swatch-btn.active {
+            transform: scale(1.18);
+            box-shadow: 0 0 0 2px #09090b, 0 0 0 4px #ccff00;
+        }
+
+        body.light-studio .swatch-btn.active {
+            box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #18181b;
+        }
+
+        .scroll-dot {
+            transition: all 0.25s ease;
+        }
+
+        .scroll-dot.active {
+            background-color: #ccff00;
+            height: 28px;
+            box-shadow: 0 0 12px rgba(204, 255, 0, 0.7);
+        }
+
+        body.light-studio .scroll-dot.active {
+            background-color: #18181b;
+            box-shadow: 0 0 10px rgba(24, 24, 27, 0.35);
+        }
+
+        .acc-card.equipped {
+            border-color: #ccff00 !important;
+            background: rgba(204, 255, 0, 0.14) !important;
+        }
+
+        body.light-studio .acc-card.equipped {
+            border-color: #18181b !important;
+            background: rgba(204, 255, 0, 0.3) !important;
+        }
+
+        .nav-pill.active {
+            background-color: #ccff00;
+            color: #09090b;
+            font-weight: 700;
+        }
+
+        body.light-studio .nav-pill.active {
+            background-color: #18181b;
+            color: #ccff00;
+        }
+
+        /* Subtle custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(204, 255, 0, 0.35);
+            border-radius: 9999px;
+        }
+
+        /* Gaming Arcade UI Accents */
+        .arcade-btn {
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.55), 0 0 18px rgba(204, 255, 0, 0.28);
+            transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.15s ease;
+        }
+        .arcade-btn:active {
+            transform: translateY(2px) scale(0.98);
+            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.55), 0 0 10px rgba(204, 255, 0, 0.2);
+        }
+        .neon-ring-pulse {
+            animation: neonPulse 2s infinite;
+        }
+        @keyframes neonPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(204, 255, 0, 0.45); }
+            50% { box-shadow: 0 0 0 8px rgba(204, 255, 0, 0); }
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-volt selection:text-black">
+
+    <!-- FULLSCREEN 3D STAGE CANVAS -->
+    <div id="canvas-container" aria-label="Interactive 3D SOHAN STORE Stickman Stage"></div>
+
+    <!-- FIXED TOP NAVIGATION HEADER -->
+    <header class="fixed top-0 left-0 right-0 z-40 px-3 sm:px-8 py-3 sm:py-4 pointer-events-none">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-2 pointer-events-auto">
+            <!-- Brand Logo -->
+            <a href="#section-hero" class="glass-card px-3 sm:px-4 py-2 sm:py-2.5 rounded-full flex items-center gap-2 group shrink-0">
+                <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-volt inline-block group-hover:scale-125 transition-transform"></span>
+                <span class="font-display font-bold tracking-wider text-xs sm:text-base">SOHAN STORE</span>
+                <span class="hidden lg:inline-block text-[10px] uppercase tracking-widest text-volt font-bold border-l border-white/20 pl-2.5">PLAY-TO-BUY</span>
+            </a>
+
+            <!-- Center Quick Nav (Desktop) -->
+            <!-- Right Controls: Player Level, Style Game, Theme Toggle & Shopping Bag -->
+            <div class="flex items-center gap-1.5 sm:gap-2">
+                <!-- Player Level & Shop Unlock Status -->
+                <div class="hidden sm:flex glass-card px-3 py-1.5 rounded-full items-center gap-2 text-[11px]">
+                    <span id="player-level-badge" class="bg-volt text-black font-display font-bold px-2 py-0.5 rounded-full text-[10px]">LVL 1</span>
+                    <div class="flex flex-col leading-none">
+                        <span id="player-rank-label" class="font-bold text-[10px] tracking-wide">ROOKIE</span>
+                        <div class="w-14 h-1.5 bg-white/15 rounded-full overflow-hidden mt-1">
+                            <div id="player-xp-bar" class="h-full bg-volt transition-all duration-300" style="width: 10%"></div>
+                        </div>
+                    </div>
+                    <span id="shop-unlock-pill" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30">🔒 Play to Buy</span>
+                </div>
+
+                <button id="toggle-game-btn" onclick="toggleGameHud()" class="glass-card px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-full flex items-center gap-1.5 text-xs font-semibold hover:border-volt active:scale-95 transition-all">
+                    <span class="text-sm leading-none">🎮</span>
+                    <span class="hidden md:inline">Quests</span>
+                    <span id="header-coins-badge" class="bg-volt/20 text-volt text-[10px] font-bold px-1.5 py-0.5 rounded-full">0🪙</span>
+                </button>
+
+                <button id="theme-toggle-btn" onclick="toggleStudioTheme()" title="Toggle Studio Lighting" class="glass-card p-2 sm:px-3.5 sm:py-2.5 rounded-full flex items-center gap-2 text-xs font-medium hover:scale-105 active:scale-95 transition-transform">
+                    <svg id="icon-sun" class="w-4 h-4 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                    <svg id="icon-moon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                    <span class="hidden md:inline" id="theme-label">Light Studio</span>
+                </button>
+
+                <button id="open-cart-btn" onclick="openCartDrawer()" class="bg-volt text-black font-semibold px-3 sm:px-4 py-2 sm:py-2.5 rounded-full flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm shadow-lg shadow-volt/20 hover:brightness-110 active:scale-95 transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                    <span class="hidden sm:inline">Bag</span>
+                    <span id="cart-badge" class="bg-black text-volt text-[11px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full min-w-[20px] text-center">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- FLOATING INTERACTIVE STICKMAN CLOTHING GAME HUD -->
+    <div id="game-hud" class="fixed top-16 sm:top-20 left-3 right-3 sm:left-8 sm:right-auto sm:w-80 z-30 hidden transition-all duration-300">
+        <div class="glass-card rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 border border-volt/40 shadow-2xl">
+            <div class="flex items-center justify-between gap-2 mb-2">
+                <div class="flex items-center gap-2 min-w-0">
+                    <span class="w-2 h-2 rounded-full bg-volt animate-ping shrink-0"></span>
+                    <span class="font-display font-bold text-xs sm:text-sm tracking-wide truncate" id="game-mission-title">Mission 1: Cyber Samurai</span>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <span id="game-timer-pill" class="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full bg-white/10">45s</span>
+                    <button onclick="toggleGameHudMinimize()" id="game-min-btn" class="p-1.5 rounded-lg hover:bg-white/10 text-xs" title="Minimize/Expand Game Panel" aria-label="Minimize Game Panel">▾</button>
+                    <button onclick="toggleGameHud()" class="p-1.5 rounded-lg hover:bg-white/10 text-xs" title="Close Game Panel" aria-label="Close Game Panel">✕</button>
+                </div>
+            </div>
+
+            <div id="game-hud-body">
+                <!-- Stats Row -->
+                <div class="grid grid-cols-3 gap-1.5 text-center mb-2.5">
+                    <div class="bg-white/5 rounded-xl py-1.5 px-2 border border-white/10">
+                        <div class="text-[9px] uppercase opacity-60">Score</div>
+                        <div id="game-score" class="font-display font-bold text-xs sm:text-sm text-volt">0</div>
+                    </div>
+                    <div class="bg-white/5 rounded-xl py-1.5 px-2 border border-white/10">
+                        <div class="text-[9px] uppercase opacity-60">Coins</div>
+                        <div id="game-coins" class="font-display font-bold text-xs sm:text-sm">0 🪙</div>
+                    </div>
+                    <div class="bg-white/5 rounded-xl py-1.5 px-2 border border-white/10">
+                        <div class="text-[9px] uppercase opacity-60">Streak</div>
+                        <div id="game-streak" class="font-display font-bold text-xs sm:text-sm">0 🔥</div>
+                    </div>
+                </div>
+
+                <!-- Mission Description & Checklist -->
+                <p id="game-mission-desc" class="text-[11px] opacity-80 mb-2 leading-snug">
+                    Dress Unit-01 for the neon runway and hit Judge Fit!
+                </p>
+                <ul id="game-checklist" class="space-y-1 mb-3 text-[11px]"></ul>
+
+                <!-- Game Controls -->
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="judgePlayerFit()" class="col-span-2 bg-volt text-black font-bold py-2.5 px-3 rounded-xl text-xs hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-1.5">
+                        <span>✨ Judge Fit & Runway</span>
+                    </button>
+                    <button onclick="randomizeStickmanFit()" class="glass-card py-2 px-2.5 rounded-xl text-[11px] font-semibold hover:border-volt active:scale-95 transition-all">
+                        🎲 Randomize
+                    </button>
+                    <button onclick="nextStyleMission()" class="glass-card py-2 px-2.5 rounded-xl text-[11px] font-semibold hover:border-volt active:scale-95 transition-all">
+                        ⏭ Next Mission
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT-SIDE VERTICAL SCROLL PROGRESS DOTS -->
+    <div class="fixed right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-2.5">
+        <a href="#section-hero" data-dot="0" aria-label="Go to Start" class="scroll-dot active w-2 h-2 rounded-full bg-white/40 hover:bg-volt"></a>
+        <a href="#section-hoodie" data-dot="1" aria-label="Go to Hoodie" class="scroll-dot w-2 h-2 rounded-full bg-white/40 hover:bg-volt"></a>
+        <a href="#section-sneakers" data-dot="2" aria-label="Go to Sneakers" class="scroll-dot w-2 h-2 rounded-full bg-white/40 hover:bg-volt"></a>
+        <a href="#section-visor" data-dot="3" aria-label="Go to Accessories" class="scroll-dot w-2 h-2 rounded-full bg-white/40 hover:bg-volt"></a>
+        <a href="#section-studio" data-dot="4" aria-label="Go to 360 Studio" class="scroll-dot w-2 h-2 rounded-full bg-white/40 hover:bg-volt"></a>
+    </div>
+
+    <!-- FLOATING LIVE POSE BADGE & 360 DRAG HINT -->
+    <div class="fixed bottom-20 sm:bottom-24 left-3 sm:left-8 z-30 pointer-events-none flex flex-wrap items-center gap-2">
+        <div class="glass-card px-3 py-1.5 rounded-full flex items-center gap-2 text-[11px] sm:text-xs">
+            <span class="w-2 h-2 rounded-full bg-volt animate-pulse"></span>
+            <span class="opacity-65">Pose:</span>
+            <span id="live-pose-label" class="font-display font-bold text-volt">Hero Wave</span>
+        </div>
+        <div id="drag-hint" class="glass-card px-3 py-1.5 rounded-full text-[11px] opacity-80 transition-opacity duration-500">
+            ↔ Drag to spin 360°
+        </div>
+    </div>
+
+    <!-- LIVE "WHAT UNIT-01 WEARS = WHAT WE SELL" GAMING LOADOUT BAR -->
+    <div id="live-loadout-bar" class="fixed bottom-3 left-3 right-3 sm:left-8 sm:right-8 z-30 pointer-events-none">
+        <div class="max-w-4xl mx-auto glass-card rounded-2xl sm:rounded-full px-3.5 sm:px-5 py-2.5 flex items-center justify-between gap-2 sm:gap-4 border border-volt/35 pointer-events-auto shadow-2xl">
+            <div class="flex items-center gap-2.5 min-w-0">
+                <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-volt/15 border border-volt/40 flex items-center justify-center text-sm sm:text-base shrink-0">
+                    🧍
+                </div>
+                <div class="min-w-0">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[10px] uppercase tracking-wider font-bold text-volt">Unit-01 Live Fit For Sale</span>
+                        <span id="loadout-lock-tag" class="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-semibold">🔒 Locked</span>
+                    </div>
+                    <div id="live-loadout-items" class="text-[11px] sm:text-xs opacity-85 truncate">
+                        Hoodie • Sneakers
+                    </div>
+                </div>
+            </div>
+            <button id="play-to-buy-bar-btn" onclick="handleBuyEquippedAction()" class="arcade-btn bg-volt text-black font-display font-bold px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl sm:rounded-full text-[11px] sm:text-xs shrink-0 hover:brightness-110 flex items-center gap-1.5">
+                <span id="play-to-buy-bar-label">🎮 Play to Buy ($293)</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- INTERACTIVE "PLAY-TO-BUY" RUNWAY POSE-REFLEX MINI-GAME PANEL -->
+    <div id="play-to-buy-modal" class="fixed inset-x-3 bottom-24 sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 sm:w-[460px] z-50 hidden">
+        <div class="glass-card rounded-3xl p-4 sm:p-5 border-2 border-volt shadow-2xl">
+            <div class="flex items-center justify-between gap-2 mb-2">
+                <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 rounded-full bg-volt text-black font-display font-bold text-[10px]">PLAY TO BUY</span>
+                    <span id="reflex-round-label" class="font-display font-bold text-xs sm:text-sm">Round 1 / 3</span>
+                </div>
+                <button onclick="closePlayToBuyGame()" class="p-1.5 rounded-lg hover:bg-white/10 text-xs" aria-label="Close Mini-Game">✕</button>
+            </div>
+
+            <p id="reflex-instruction" class="text-xs opacity-85 mb-2.5">
+                Match Unit-01's target runway move before time runs out to unlock purchasing this exact outfit!
+            </p>
+
+            <!-- Timer Bar -->
+            <div class="w-full h-2 bg-white/10 rounded-full overflow-hidden mb-3">
+                <div id="reflex-timer-bar" class="h-full bg-volt transition-all duration-75" style="width: 100%"></div>
+            </div>
+
+            <!-- Target Prompt -->
+            <div id="reflex-target-box" class="bg-white/5 border border-volt/40 rounded-2xl p-3 text-center mb-3">
+                <div class="text-[10px] uppercase tracking-widest opacity-65">TAP THIS MOVE NOW</div>
+                <div id="reflex-target-move" class="font-display text-xl sm:text-2xl font-bold text-volt mt-0.5">⚡ POWER STANCE</div>
+            </div>
+
+            <!-- 4 Interactive Arcade Move Buttons (Touch + Click + Keys 1-4) -->
+            <div id="reflex-buttons-grid" class="grid grid-cols-2 gap-2">
+                <button onclick="handleReflexChoice(0)" class="arcade-btn glass-card py-3 px-3 rounded-xl text-xs font-bold hover:border-volt flex items-center justify-center gap-1.5">
+                    <span class="opacity-50 font-mono text-[10px]">[1]</span>
+                    <span>⚡ Power Stance</span>
+                </button>
+                <button onclick="handleReflexChoice(1)" class="arcade-btn glass-card py-3 px-3 rounded-xl text-xs font-bold hover:border-volt flex items-center justify-center gap-1.5">
+                    <span class="opacity-50 font-mono text-[10px]">[2]</span>
+                    <span>🏃 Stride Dash</span>
+                </button>
+                <button onclick="handleReflexChoice(2)" class="arcade-btn glass-card py-3 px-3 rounded-xl text-xs font-bold hover:border-volt flex items-center justify-center gap-1.5">
+                    <span class="opacity-50 font-mono text-[10px]">[3]</span>
+                    <span>🕺 Victory Dance</span>
+                </button>
+                <button onclick="handleReflexChoice(3)" class="arcade-btn glass-card py-3 px-3 rounded-xl text-xs font-bold hover:border-volt flex items-center justify-center gap-1.5">
+                    <span class="opacity-50 font-mono text-[10px]">[4]</span>
+                    <span>⚔️ Cyber Slash</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN SCROLLING CONTENT OVERLAY -->
+    <main class="relative z-10 pointer-events-none">
+
+        <!-- SECTION 0: HERO -->
+        <section id="section-hero" class="min-h-screen flex items-end lg:items-center px-4 sm:px-10 pt-24 pb-28">
+            <div class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12">
+                <div class="lg:col-span-5 pointer-events-auto">
+                    <div class="glass-card rounded-3xl p-6 sm:p-8 border-volt/25">
+                        <div class="inline-flex items-center gap-2 text-[11px] uppercase tracking-widest font-semibold px-3 py-1 rounded-full bg-volt/15 text-volt border border-volt/30 mb-4">
+                            <span>🎮 Play-to-Buy Arcade</span>
+                            <span>•</span>
+                            <span>Live 3D Merch</span>
+                        </div>
+                        <h1 class="font-display text-4xl sm:text-6xl font-bold tracking-tight leading-[1.05] mb-4">
+                            DRESS. <span class="text-volt">PLAY.</span><br>OWN THE FIT.
+                        </h1>
+                        <p class="text-sm sm:text-base opacity-80 leading-relaxed mb-7">
+                            Welcome to <strong>SOHAN STORE ARCADE</strong>. Customize <strong>Unit-01</strong> in 3D, beat the interactive clothing & pose challenge to unlock checkout, and <strong>buy the exact outfit Unit-01 is wearing</strong>!
+                        </p>
+                        <div class="flex flex-wrap items-center gap-2.5 sm:gap-3">
+                            <button onclick="openPlayToBuyGame()" class="arcade-btn neon-ring-pulse bg-volt text-black font-display font-bold px-5 sm:px-6 py-3.5 rounded-2xl text-sm hover:brightness-110 inline-flex items-center gap-2">
+                                <span>🎮 Play to Buy Fit</span>
+                            </button>
+                            <button onclick="startStyleGame()" class="glass-card px-5 py-3.5 rounded-2xl text-sm font-semibold border-volt/50 hover:border-volt active:scale-95 transition-all">
+                                🏆 Style Quests
+                            </button>
+                            <a href="#section-hoodie" class="glass-card px-5 py-3.5 rounded-2xl text-sm font-semibold hover:border-volt/60 active:scale-95 transition-all inline-flex items-center gap-1.5">
+                                <span>Gear Drop ↓</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 1: AERO-X SHELL HOODIE -->
+        <section id="section-hoodie" class="min-h-screen flex items-end lg:items-center px-4 sm:px-10 py-24">
+            <div class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12">
+                <div class="lg:col-start-8 lg:col-span-5 pointer-events-auto">
+                    <div class="glass-card rounded-3xl p-6 sm:p-8">
+                        <div class="flex items-center justify-between gap-2 mb-3">
+                            <span class="text-xs font-semibold uppercase tracking-widest text-volt">01 / Outerwear</span>
+                            <span class="font-display text-2xl font-bold">$128</span>
+                        </div>
+                        <h2 class="font-display text-3xl sm:text-4xl font-bold mb-2">Aero-X Shell Hoodie</h2>
+                        <p class="text-sm opacity-75 leading-relaxed mb-6">
+                            Structured geometric tech-fleece with articulated raglan sleeves, oversized collar hood, and luminescent chest badge.
+                        </p>
+
+                        <!-- Colorway Swatches -->
+                        <div class="mb-6">
+                            <div class="flex items-center justify-between text-xs mb-2.5">
+                                <span class="opacity-65 uppercase tracking-wider">Colorway</span>
+                                <span id="hoodie-color-name" class="font-semibold">Volt Acid</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <button onclick="setItemColor('hoodie', '#ccff00', 'Volt Acid', this)" class="swatch-btn active w-8 h-8 rounded-full bg-[#ccff00]" aria-label="Volt Acid"></button>
+                                <button onclick="setItemColor('hoodie', '#ef4444', 'Signal Crimson', this)" class="swatch-btn w-8 h-8 rounded-full bg-[#ef4444]" aria-label="Signal Crimson"></button>
+                                <button onclick="setItemColor('hoodie', '#38bdf8', 'Glacier Cyan', this)" class="swatch-btn w-8 h-8 rounded-full bg-[#38bdf8]" aria-label="Glacier Cyan"></button>
+                                <button onclick="setItemColor('hoodie', '#a855f7', 'Ultraviolet', this)" class="swatch-btn w-8 h-8 rounded-full bg-[#a855f7]" aria-label="Ultraviolet"></button>
+                                <button onclick="setItemColor('hoodie', '#18181b', 'Stealth Carbon', this)" class="swatch-btn w-8 h-8 rounded-full bg-[#18181b] border border-white/30" aria-label="Stealth Carbon"></button>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <button id="equip-btn-hoodie" onclick="toggleEquip('hoodie')" class="glass-card py-3.5 px-4 rounded-2xl text-sm font-semibold hover:border-volt active:scale-95 transition-all">
+                                Wearing ✓
+                            </button>
+                            <button onclick="addToCart('hoodie')" class="bg-volt text-black font-bold py-3.5 px-4 rounded-2xl text-sm hover:brightness-110 active:scale-95 transition-all">
+                                Add to Bag
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: KINETIC PULSE RUNNERS -->
+        <section id="section-sneakers" class="min-h-screen flex items-end lg:items-center px-4 sm:px-10 py-24">
+            <div class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12">
+                <div class="lg:col-span-5 pointer-events-auto">
+                    <div class="glass-card rounded-3xl p-6 sm:p-8">
+                        <div class="flex items-center justify-between gap-2 mb-3">
+                            <span class="text-xs font-semibold uppercase tracking-widest text-volt">02 / Footwear</span>
+                            <span class="font-display text-2xl font-bold">$165</span>
+                        </div>
+                        <h2 class="font-display text-3xl sm:text-4xl font-bold mb-2">Kinetic Pulse Runners</h2>
+                        <p class="text-sm opacity-75 leading-relaxed mb-6">
+                            Zero-gravity sculpted midsoles engineered for high-cadence motion. Watch Unit-01 break into a live stride test as you inspect the silhouette.
+                        </p>
+
+                        <!-- Colorway Swatches -->
+                        <div class="mb-6">
+                            <div class="flex items-center justify-between text-xs mb-2.5">
+                                <span class="opacity-65 uppercase tracking-wider">Colorway</span>
+                                <span id="sneakers-color-name" class="font-semibold">Hyper Orange</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <button onclick="setItemColor('sneakers', '#f97316', 'Hyper Orange', this)" class="swatch-btn active w-8 h-8 rounded-full bg-[#f97316]" aria-label="Hyper Orange"></button>
+                                <button onclick="setItemColor('sneakers', '#ccff00', 'Volt Acid', this)" class="swatch-btn w-8 h-8 rounded-full bg-[#ccff00]" aria-label="Volt Acid"></button>
+                                <button onclick="setItemColor('sneakers', '#ec4899', 'Cyber Pink', this)" class="swatch-btn w-8 h-8 rounded-full bg-[#ec4899]" aria-label="Cyber Pink"></button>
+                                <button onclick="setItemColor('sneakers', '#ffffff', 'Chalk White', this)" class="swatch-btn w-8 h-8 rounded-full bg-white border border-black/20" aria-label="Chalk White"></button>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <button id="equip-btn-sneakers" onclick="toggleEquip('sneakers')" class="glass-card py-3.5 px-4 rounded-2xl text-sm font-semibold hover:border-volt active:scale-95 transition-all">
+                                Wearing ✓
+                            </button>
+                            <button onclick="addToCart('sneakers')" class="bg-volt text-black font-bold py-3.5 px-4 rounded-2xl text-sm hover:brightness-110 active:scale-95 transition-all">
+                                Add to Bag
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: INTERACTIVE ACCESSORIES LAB (CLICK ANY ACCESSORY FOR UNIQUE POSE) -->
+        <section id="section-visor" class="min-h-screen flex items-end lg:items-center px-4 sm:px-10 py-24">
+            <div class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12">
+                <div class="lg:col-start-7 lg:col-span-6 pointer-events-auto">
+                    <div class="glass-card rounded-3xl p-5 sm:p-8">
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <span class="text-xs font-semibold uppercase tracking-widest text-volt">03 / Accessories Lab</span>
+                            <button onclick="clearAllAccessories()" class="text-xs opacity-70 hover:opacity-100 underline">Clear All</button>
+                        </div>
+                        <h2 class="font-display text-3xl sm:text-4xl font-bold mb-2">Click to Wear & Pose</h2>
+                        <p class="text-sm opacity-75 leading-relaxed mb-5">
+                            Tap any 3D accessory below—Unit-01 equips it instantly and performs its signature animated pose!
+                        </p>
+
+                        <!-- 6 Clickable Accessories Grid -->
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-5">
+                            <button id="acc-card-visor" onclick="selectAccessory('visor')" class="acc-card glass-card p-3 rounded-2xl text-left hover:border-volt active:scale-95 transition-all">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xl">🕶️</span>
+                                    <span class="text-[11px] font-bold text-volt">$85</span>
+                                </div>
+                                <div class="font-display font-bold text-xs sm:text-sm">Prism Visor</div>
+                                <div class="text-[10px] opacity-65">Pose: Cyber Scan</div>
+                            </button>
+
+                            <button id="acc-card-backpack" onclick="selectAccessory('backpack')" class="acc-card glass-card p-3 rounded-2xl text-left hover:border-volt active:scale-95 transition-all">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xl">🎒</span>
+                                    <span class="text-[11px] font-bold text-volt">$110</span>
+                                </div>
+                                <div class="font-display font-bold text-xs sm:text-sm">Exo-Pack</div>
+                                <div class="text-[10px] opacity-65">Pose: Jet Hover</div>
+                            </button>
+
+                            <button id="acc-card-crown" onclick="selectAccessory('crown')" class="acc-card glass-card p-3 rounded-2xl text-left hover:border-volt active:scale-95 transition-all">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xl">👑</span>
+                                    <span class="text-[11px] font-bold text-volt">$95</span>
+                                </div>
+                                <div class="font-display font-bold text-xs sm:text-sm">Neon Crown</div>
+                                <div class="text-[10px] opacity-65">Pose: Royal Salute</div>
+                            </button>
+
+                            <button id="acc-card-katana" onclick="selectAccessory('katana')" class="acc-card glass-card p-3 rounded-2xl text-left hover:border-volt active:scale-95 transition-all">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xl">⚔️</span>
+                                    <span class="text-[11px] font-bold text-volt">$140</span>
+                                </div>
+                                <div class="font-display font-bold text-xs sm:text-sm">Cyber Katana</div>
+                                <div class="text-[10px] opacity-65">Pose: Samurai</div>
+                            </button>
+
+                            <button id="acc-card-cap" onclick="selectAccessory('cap')" class="acc-card glass-card p-3 rounded-2xl text-left hover:border-volt active:scale-95 transition-all">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xl">🧢</span>
+                                    <span class="text-[11px] font-bold text-volt">$55</span>
+                                </div>
+                                <div class="font-display font-bold text-xs sm:text-sm">Street Cap</div>
+                                <div class="text-[10px] opacity-65">Pose: Brim Tip</div>
+                            </button>
+
+                            <button id="acc-card-shield" onclick="selectAccessory('shield')" class="acc-card glass-card p-3 rounded-2xl text-left hover:border-volt active:scale-95 transition-all">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xl">🛡️</span>
+                                    <span class="text-[11px] font-bold text-volt">$125</span>
+                                </div>
+                                <div class="font-display font-bold text-xs sm:text-sm">Hex Shield</div>
+                                <div class="text-[10px] opacity-65">Pose: Guard Stance</div>
+                            </button>
+                        </div>
+
+                        <!-- Shared Glow Accent Color -->
+                        <div class="mb-5">
+                            <div class="flex items-center justify-between text-xs mb-2">
+                                <span class="opacity-65 uppercase tracking-wider">Accessory Glow Tint</span>
+                                <span id="visor-color-name" class="font-semibold">Neon Cyan</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <button onclick="setItemColor('visor', '#06b6d4', 'Neon Cyan', this)" class="swatch-btn active w-7 h-7 rounded-full bg-[#06b6d4]" aria-label="Neon Cyan"></button>
+                                <button onclick="setItemColor('visor', '#facc15', 'Solar Gold', this)" class="swatch-btn w-7 h-7 rounded-full bg-[#facc15]" aria-label="Solar Gold"></button>
+                                <button onclick="setItemColor('visor', '#f43f5e', 'Laser Rose', this)" class="swatch-btn w-7 h-7 rounded-full bg-[#f43f5e]" aria-label="Laser Rose"></button>
+                                <button onclick="setItemColor('visor', '#a855f7', 'Plasma Violet', this)" class="swatch-btn w-7 h-7 rounded-full bg-[#a855f7]" aria-label="Plasma Violet"></button>
+                                <button onclick="setItemColor('visor', '#ccff00', 'Volt Acid', this)" class="swatch-btn w-7 h-7 rounded-full bg-[#ccff00]" aria-label="Volt Acid"></button>
+                            </div>
+                        </div>
+
+                        <button onclick="addEquippedAccessoriesToCart()" class="w-full bg-volt text-black font-bold py-3.5 px-4 rounded-2xl text-sm hover:brightness-110 active:scale-95 transition-all">
+                            Add Equipped Accessories to Bag
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: 360° FIT STUDIO LOOKBOOK -->
+        <section id="section-studio" class="min-h-screen flex items-end px-4 sm:px-10 pt-24 pb-28">
+            <div class="max-w-4xl mx-auto w-full pointer-events-auto">
+                <div class="glass-card rounded-3xl p-5 sm:p-7">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+                        <div>
+                            <span class="text-xs font-semibold uppercase tracking-widest text-volt">04 / 360° Fit Studio</span>
+                            <h2 class="font-display text-2xl sm:text-3xl font-bold">Customize & Spin Unit-01</h2>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="randomizeStickmanFit()" class="glass-card px-3.5 py-2 rounded-xl text-xs font-semibold hover:border-volt active:scale-95 transition-all">🎲 Random Fit</button>
+                            <button onclick="resetCameraOrbit()" class="glass-card px-3.5 py-2 rounded-xl text-xs font-semibold hover:border-volt active:scale-95 transition-all">↺ Reset View</button>
+                        </div>
+                    </div>
+
+                    <!-- Pose Selector -->
+                    <div class="mb-4">
+                        <div class="text-[11px] uppercase tracking-wider opacity-65 mb-2">Studio Poses</div>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="setStudioPose('idle')" class="pose-btn glass-card px-3.5 py-2 rounded-xl text-xs font-semibold hover:border-volt active:scale-95 transition-all">🧍 Idle</button>
+                            <button onclick="setStudioPose('run')" class="pose-btn glass-card px-3.5 py-2 rounded-xl text-xs font-semibold hover:border-volt active:scale-95 transition-all">🏃 Jog</button>
+                            <button onclick="setStudioPose('dance')" class="pose-btn glass-card px-3.5 py-2 rounded-xl text-xs font-semibold hover:border-volt active:scale-95 transition-all">🕺 Victory Dance</button>
+                            <button onclick="setStudioPose('hero')" class="pose-btn glass-card px-3.5 py-2 rounded-xl text-xs font-semibold hover:border-volt active:scale-95 transition-all">⚡ Power Stance</button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Gear Toggles -->
+                    <div class="mb-5">
+                        <div class="text-[11px] uppercase tracking-wider opacity-65 mb-2">Quick Gear Toggles</div>
+                        <div class="flex flex-wrap gap-2">
+                            <button id="studio-toggle-hoodie" onclick="toggleEquip('hoodie')" class="glass-card px-3 py-2 rounded-xl text-xs font-medium hover:border-volt active:scale-95 transition-all">🧥 Hoodie</button>
+                            <button id="studio-toggle-sneakers" onclick="toggleEquip('sneakers')" class="glass-card px-3 py-2 rounded-xl text-xs font-medium hover:border-volt active:scale-95 transition-all">👟 Sneakers</button>
+                            <button id="studio-toggle-visor" onclick="selectAccessory('visor')" class="glass-card px-3 py-2 rounded-xl text-xs font-medium hover:border-volt active:scale-95 transition-all">🕶️ Visor</button>
+                            <button id="studio-toggle-backpack" onclick="selectAccessory('backpack')" class="glass-card px-3 py-2 rounded-xl text-xs font-medium hover:border-volt active:scale-95 transition-all">🎒 Exo-Pack</button>
+                            <button id="studio-toggle-crown" onclick="selectAccessory('crown')" class="glass-card px-3 py-2 rounded-xl text-xs font-medium hover:border-volt active:scale-95 transition-all">👑 Crown</button>
+                            <button id="studio-toggle-katana" onclick="selectAccessory('katana')" class="glass-card px-3 py-2 rounded-xl text-xs font-medium hover:border-volt active:scale-95 transition-all">⚔️ Katana</button>
+                            <button id="studio-toggle-cap" onclick="selectAccessory('cap')" class="glass-card px-3 py-2 rounded-xl text-xs font-medium hover:border-volt active:scale-95 transition-all">🧢 Cap</button>
+                            <button id="studio-toggle-shield" onclick="selectAccessory('shield')" class="glass-card px-3 py-2 rounded-xl text-xs font-medium hover:border-volt active:scale-95 transition-all">🛡️ Shield</button>
+                        </div>
+                    </div>
+
+                    <button onclick="handleBuyEquippedAction()" class="arcade-btn w-full bg-volt text-black font-display font-bold py-3.5 px-6 rounded-2xl text-sm hover:brightness-110 transition-all">
+                        <span id="studio-buy-fit-label">🎮 Play Game to Buy Unit-01's Equipped Fit</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- SHOPPING BAG SLIDE-OVER DRAWER -->
+    <div id="cart-backdrop" onclick="closeCartDrawer()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden transition-opacity"></div>
+    <aside id="cart-drawer" class="fixed top-0 right-0 h-full w-full max-w-md z-50 translate-x-full transition-transform duration-300 ease-out flex flex-col glass-card border-l border-white/15">
+        <div class="p-6 border-b border-white/10 flex items-center justify-between">
+            <div>
+                <h3 class="font-display text-xl font-bold">Your SOHAN Bag</h3>
+                <p class="text-xs opacity-65">Play Style Game to earn automatic coin discounts</p>
+            </div>
+            <button onclick="closeCartDrawer()" class="p-2 rounded-full hover:bg-white/10 transition-colors" aria-label="Close Shopping Bag">✕</button>
+        </div>
+
+        <div id="cart-items-container" class="flex-1 overflow-y-auto p-6 space-y-3"></div>
+
+        <div class="p-6 border-t border-white/10 space-y-3">
+            <div id="coin-discount-row" class="hidden items-center justify-between text-xs text-volt bg-volt/10 border border-volt/30 px-3 py-2 rounded-xl">
+                <span>🎮 Style Coins Discount (<span id="discount-coins-used">0</span>🪙)</span>
+                <span id="cart-discount-amount" class="font-bold">-$0</span>
+            </div>
+            <div class="flex items-center justify-between text-sm">
+                <span class="opacity-70">Total</span>
+                <span id="cart-subtotal" class="font-display text-xl font-bold">$0</span>
+            </div>
+            <button id="checkout-btn" onclick="openCheckoutModal()" class="w-full bg-volt text-black font-bold py-3.5 rounded-2xl text-sm hover:brightness-110 active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none">
+                Proceed to Checkout
+            </button>
+        </div>
+    </aside>
+
+    <!-- CHECKOUT CONFIRMATION MODAL -->
+    <div id="checkout-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+        <div class="glass-card rounded-3xl max-w-md w-full p-6 sm:p-8 border border-volt/40 text-center">
+            <div class="w-14 h-14 rounded-full bg-volt/20 text-volt flex items-center justify-center text-2xl mx-auto mb-4">✓</div>
+            <h3 class="font-display text-2xl font-bold mb-1">Order Confirmed!</h3>
+            <p class="text-xs opacity-70 mb-5">Unit-01 is celebrating your SOHAN STORE drop.</p>
+            <div id="checkout-summary" class="text-left text-xs space-y-2 bg-white/5 rounded-2xl p-4 mb-6 border border-white/10"></div>
+            <button onclick="closeCheckoutModal()" class="w-full bg-volt text-black font-bold py-3 rounded-2xl text-sm hover:brightness-110 active:scale-95 transition-all">
+                Back to 3D Studio
+            </button>
+        </div>
+    </div>
+
+    <!-- NON-BLOCKING TOAST NOTIFICATION -->
+    <div id="toast" class="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 glass-card px-4 py-2.5 rounded-full text-xs sm:text-sm font-medium border border-volt/40 opacity-0 pointer-events-none translate-y-3 transition-all duration-300 max-w-[92vw] text-center"></div>
+
+    <script>
+        /* ==========================================================================
+           1. PRODUCT CATALOG & APPLICATION STATE
+           ========================================================================== */
+        const PRODUCTS = {
+            hoodie: {
+                id: 'hoodie',
+                name: 'Aero-X Shell Hoodie',
+                price: 128,
+                color: '#ccff00',
+                colorName: 'Volt Acid',
+                equipped: true,
+                isAccessory: false
+            },
+            sneakers: {
+                id: 'sneakers',
+                name: 'Kinetic Pulse Runners',
+                price: 165,
+                color: '#f97316',
+                colorName: 'Hyper Orange',
+                equipped: true,
+                isAccessory: false
+            },
+            visor: {
+                id: 'visor',
+                name: 'Prism Visor',
+                price: 85,
+                color: '#06b6d4',
+                colorName: 'Neon Cyan',
+                equipped: false,
+                isAccessory: true,
+                pose: 'scan',
+                poseLabel: 'Cyber Scan'
+            },
+            backpack: {
+                id: 'backpack',
+                name: 'Exo-Pack',
+                price: 110,
+                color: '#06b6d4',
+                colorName: 'Neon Cyan',
+                equipped: false,
+                isAccessory: true,
+                pose: 'jetpack',
+                poseLabel: 'Jet Hover'
+            },
+            crown: {
+                id: 'crown',
+                name: 'Neon Crown',
+                price: 95,
+                color: '#06b6d4',
+                colorName: 'Neon Cyan',
+                equipped: false,
+                isAccessory: true,
+                pose: 'royal',
+                poseLabel: 'Royal Salute'
+            },
+            katana: {
+                id: 'katana',
+                name: 'Cyber Katana',
+                price: 140,
+                color: '#06b6d4',
+                colorName: 'Neon Cyan',
+                equipped: false,
+                isAccessory: true,
+                pose: 'samurai',
+                poseLabel: 'Samurai Stance'
+            },
+            cap: {
+                id: 'cap',
+                name: 'Street Cap',
+                price: 55,
+                color: '#06b6d4',
+                colorName: 'Neon Cyan',
+                equipped: false,
+                isAccessory: true,
+                pose: 'swagger',
+                poseLabel: 'Brim Tip'
+            },
+            shield: {
+                id: 'shield',
+                name: 'Hex Shield',
+                price: 125,
+                color: '#06b6d4',
+                colorName: 'Neon Cyan',
+                equipped: false,
+                isAccessory: true,
+                pose: 'guard',
+                poseLabel: 'Guard Stance'
+            }
+        };
+
+        const ACCESSORY_KEYS = ['visor', 'backpack', 'crown', 'katana', 'cap', 'shield'];
+
+        let cart = [];
+        let isLightMode = false;
+        let studioPose = 'idle'; // 'idle' | 'run' | 'dance' | 'hero'
+        let accessoryPoseOverride = null; // Active pose triggered by clicking an accessory
+        let currentSectionIndex = 0;
+
+        /* ==========================================================================
+           1B. STICKMAN CLOTHING GAME STATE & MISSIONS
+           ========================================================================== */
+        const STYLE_MISSIONS = [
+            {
+                id: 'cyber-samurai',
+                title: 'Cyber Samurai',
+                desc: 'Equip the Cyber Katana + Prism Visor + Aero-X Hoodie for a futuristic warrior look.',
+                requiredItems: ['katana', 'visor', 'hoodie'],
+                bonusPose: 'samurai',
+                rewardCoins: 150,
+                timeLimit: 45
+            },
+            {
+                id: 'neon-royalty',
+                title: 'Neon Royalty',
+                desc: 'Crown Unit-01 with the Neon Crown, Kinetic Sneakers, and Aero-X Hoodie!',
+                requiredItems: ['crown', 'sneakers', 'hoodie'],
+                bonusPose: 'royal',
+                rewardCoins: 180,
+                timeLimit: 45
+            },
+            {
+                id: 'sky-runner',
+                title: 'Jetpack Street Runner',
+                desc: 'Combine the Exo-Pack, Street Cap, and Kinetic Sneakers for high-altitude style.',
+                requiredItems: ['backpack', 'cap', 'sneakers'],
+                bonusPose: 'jetpack',
+                rewardCoins: 200,
+                timeLimit: 45
+            },
+            {
+                id: 'aegis-guardian',
+                title: 'Aegis Guardian',
+                desc: 'Gear up with the Hex Shield, Prism Visor, Hoodie, and Sneakers!',
+                requiredItems: ['shield', 'visor', 'hoodie', 'sneakers'],
+                bonusPose: 'guard',
+                rewardCoins: 250,
+                timeLimit: 50
+            }
+        ];
+
+        const gameState = {
+            active: false,
+            minimized: false,
+            missionIndex: 0,
+            score: 0,
+            coins: 0,
+            streak: 0,
+            timeLeft: 45,
+            timerInterval: null,
+            pausedByVisibility: false
+        };
+
+        // Play-to-Buy Player Progression & Runway Reflex Mini-Game State
+        const playerStats = {
+            xp: 15,
+            level: 1,
+            buyingUnlocked: false,
+            challengesWon: 0
+        };
+
+        const REFLEX_MOVES = [
+            { id: 0, label: '⚡ POWER STANCE', pose: 'hero' },
+            { id: 1, label: '🏃 STRIDE DASH', pose: 'run' },
+            { id: 2, label: '🕺 VICTORY DANCE', pose: 'dance' },
+            { id: 3, label: '⚔️ CYBER SLASH', pose: 'samurai' }
+        ];
+
+        const reflexGame = {
+            active: false,
+            round: 0,
+            totalRounds: 3,
+            targetIndex: 0,
+            timeLeftMs: 3200,
+            maxTimeMs: 3200,
+            interval: null,
+            pendingItemKey: null,
+            pausedByVisibility: false
+        };
+
+        // Lightweight Web Audio synth for crisp game chimes
+        let audioCtx = null;
+        function playGameTone(freq, duration = 0.12, type = 'sine', vol = 0.08) {
+            try {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContextClass) return;
+                if (!audioCtx) audioCtx = new AudioContextClass();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                // Ignore audio errors on restricted environments
+            }
+        }
+
+        /* ==========================================================================
+           2. THREE.JS SCENE VARIABLES
+           ========================================================================== */
+        let scene, camera, renderer, clock;
+        let elapsedTime = 0; // Clamped delta accumulator safe for minimized tabs
+        let ambientLight, dirLight, rimLight, accentLight;
+        let floorGroup, ringMesh, gridHelper, floatingShapes = [];
+
+        // 3D Scrolling Interactive "SOHAN STORE" Background Sign
+        let sohanSignGroup = null;
+        let sohanLetters = [];
+        let sohanSignMat = null;
+        let sohanSignSubMat = null;
+        let sohanSignFrameMat = null;
+
+        // 3D Celebration Confetti Particles
+        let confettiGroup = null;
+        let confettiParticles = [];
+
+        // Stickman Rig & Wearable 3D Gear References
+        const stickman = {
+            root: null,
+            hips: null,
+            torso: null,
+            head: null,
+            leftUpperArm: null,
+            leftForearm: null,
+            rightUpperArm: null,
+            rightForearm: null,
+            leftThigh: null,
+            leftShin: null,
+            rightThigh: null,
+            rightShin: null,
+            baseMat: null,
+            jointMat: null,
+            gear: {
+                hoodieParts: [],
+                hoodieMat: null,
+                sneakerParts: [],
+                sneakerMat: null,
+                visorGroup: null,
+                backpackGroup: null,
+                crownGroup: null,
+                katanaGroup: null,
+                capGroup: null,
+                shieldGroup: null,
+                glowMat: null
+            }
+        };
+
+        // Smooth Scroll & Interactive Camera/Orbit Controls
+        let targetScrollProgress = 0;
+        let smoothScrollProgress = 0;
+        let lastSmoothScroll = 0;
+        let scrollVelocity = 0;
+
+        let isDragging = false;
+        let touchGestureLocked = null; // 'spin' | 'scroll' | null
+        let prevPointer = { x: 0, y: 0 };
+        let startPointer = { x: 0, y: 0 };
+        let pointerNDC = { x: 0, y: 0 };
+        let targetUserOrbitY = 0;
+        let userOrbitY = 0;
+        let targetUserOrbitX = 0;
+        let userOrbitX = 0;
+
+        function lerp(a, b, t) {
+            return a + (b - a) * t;
+        }
+
+        /* ==========================================================================
+           3. INITIALIZE THREE.JS STUDIO
+           ========================================================================== */
+        function initThreeJS() {
+            const container = document.getElementById('canvas-container');
+            if (!container || typeof THREE === 'undefined') return;
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x09090b);
+            scene.fog = new THREE.FogExp2(0x09090b, 0.045);
+
+            camera = new THREE.PerspectiveCamera(42, window.innerWidth / Math.max(1, window.innerHeight), 0.1, 100);
+            camera.position.set(0, 2.0, 6.2);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            clock = new THREE.Clock();
+
+            // Studio Lighting Setup
+            ambientLight = new THREE.AmbientLight(0xffffff, 0.55);
+            scene.add(ambientLight);
+
+            dirLight = new THREE.DirectionalLight(0xffffff, 1.15);
+            dirLight.position.set(4, 8, 5);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 1024;
+            dirLight.shadow.mapSize.height = 1024;
+            dirLight.shadow.camera.near = 1;
+            dirLight.shadow.camera.far = 25;
+            scene.add(dirLight);
+
+            rimLight = new THREE.DirectionalLight(0xccff00, 0.75);
+            rimLight.position.set(-4, 4, -4);
+            scene.add(rimLight);
+
+            accentLight = new THREE.PointLight(0x38bdf8, 0.65, 16);
+            accentLight.position.set(3, 2.5, -2);
+            scene.add(accentLight);
+
+            buildEnvironment();
+            buildSohanStoreSign();
+            buildConfettiSystem();
+            buildStickman();
+            setupPointerEvents();
+            onWindowResize();
+
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('orientationchange', () => setTimeout(onWindowResize, 120));
+            window.addEventListener('scroll', onScroll, { passive: true });
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+            window.addEventListener('keydown', (e) => {
+                if (!reflexGame.active) return;
+                if (e.key >= '1' && e.key <= '4') {
+                    handleReflexChoice(Number(e.key) - 1);
+                } else if (e.key === 'Escape') {
+                    closePlayToBuyGame();
+                }
+            });
+
+            applyGearVisibility();
+            updateEquipButtons();
+            syncEquippedLoadoutBar();
+            updatePlayerStatsUI();
+            renderCart();
+            onScroll();
+        }
+
+        function buildEnvironment() {
+            floorGroup = new THREE.Group();
+            scene.add(floorGroup);
+
+            // Reflective Circular Studio Pedestal
+            const pedestalGeo = new THREE.CylinderGeometry(1.45, 1.65, 0.14, 48);
+            const pedestalMat = new THREE.MeshStandardMaterial({
+                color: 0x18181b,
+                roughness: 0.35,
+                metalness: 0.6
+            });
+            const pedestal = new THREE.Mesh(pedestalGeo, pedestalMat);
+            pedestal.position.y = -0.07;
+            pedestal.receiveShadow = true;
+            floorGroup.add(pedestal);
+
+            // Glowing Neon Ring around Pedestal
+            const ringGeo = new THREE.TorusGeometry(1.5, 0.025, 16, 64);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0xccff00 });
+            ringMesh = new THREE.Mesh(ringGeo, ringMat);
+            ringMesh.rotation.x = Math.PI / 2;
+            ringMesh.position.y = 0.01;
+            floorGroup.add(ringMesh);
+
+            // Subtle Floor Grid
+            gridHelper = new THREE.GridHelper(24, 24, 0x27272a, 0x18181b);
+            gridHelper.position.y = -0.14;
+            scene.add(gridHelper);
+
+            // Floating Minimalist Studio Shapes
+            const shapesGeo = [
+                new THREE.OctahedronGeometry(0.16),
+                new THREE.IcosahedronGeometry(0.14),
+                new THREE.TorusGeometry(0.12, 0.035, 10, 24)
+            ];
+            const shapeMat = new THREE.MeshStandardMaterial({
+                color: 0xccff00,
+                emissive: 0xccff00,
+                emissiveIntensity: 0.25,
+                roughness: 0.3,
+                metalness: 0.6,
+                wireframe: true
+            });
+
+            for (let i = 0; i < 10; i++) {
+                const mesh = new THREE.Mesh(shapesGeo[i % shapesGeo.length], shapeMat);
+                const angle = (i / 10) * Math.PI * 2;
+                const radius = 3.4 + (i % 3) * 1.1;
+                mesh.position.set(Math.cos(angle) * radius, 0.9 + (i % 4) * 0.75, Math.sin(angle) * radius - 1.5);
+                mesh.userData = {
+                    baseY: mesh.position.y,
+                    speed: 0.8 + (i % 3) * 0.35,
+                    phase: i * 1.1
+                };
+                scene.add(mesh);
+                floatingShapes.push(mesh);
+            }
+        }
+
+        /* ==========================================================================
+           3B. PROCEDURAL 3D "SOHAN STORE" INTERACTIVE BACKGROUND SIGN
+           ========================================================================== */
+        const LETTER_PATTERNS = {
+            S: ['1111', '1000', '1111', '0001', '1111'],
+            O: ['1111', '1001', '1001', '1001', '1111'],
+            H: ['1001', '1001', '1111', '1001', '1001'],
+            A: ['0110', '1001', '1111', '1001', '1001'],
+            N: ['1001', '1101', '1011', '1001', '1001'],
+            T: ['1111', '0110', '0110', '0110', '0110'],
+            R: ['1110', '1001', '1110', '1010', '1001'],
+            E: ['1111', '1000', '1110', '1000', '1111']
+        };
+
+        function buildSohanStoreSign() {
+            sohanSignGroup = new THREE.Group();
+            sohanSignGroup.position.set(0, 2.55, -3.4);
+            scene.add(sohanSignGroup);
+
+            sohanSignMat = new THREE.MeshStandardMaterial({
+                color: 0xccff00,
+                emissive: 0xccff00,
+                emissiveIntensity: 0.72,
+                roughness: 0.2,
+                metalness: 0.45
+            });
+
+            sohanSignSubMat = new THREE.MeshStandardMaterial({
+                color: 0xf4f4f5,
+                emissive: 0x38bdf8,
+                emissiveIntensity: 0.45,
+                roughness: 0.25,
+                metalness: 0.55
+            });
+
+            sohanSignFrameMat = new THREE.MeshStandardMaterial({
+                color: 0x18181b,
+                roughness: 0.4,
+                metalness: 0.7
+            });
+
+            // Architectural backing rails
+            const backBarTop = new THREE.Mesh(new THREE.BoxGeometry(6.4, 0.06, 0.08), sohanSignFrameMat);
+            backBarTop.position.set(0, 0.92, -0.18);
+            sohanSignGroup.add(backBarTop);
+
+            const backBarBottom = new THREE.Mesh(new THREE.BoxGeometry(5.6, 0.06, 0.08), sohanSignFrameMat);
+            backBarBottom.position.set(0, -0.78, -0.18);
+            sohanSignGroup.add(backBarBottom);
+
+            function add3DWord(word, yOffset, voxelSize, depth, letterGap, material, rowIndex) {
+                const colsPerLetter = 4;
+                const letterWidth = colsPerLetter * voxelSize;
+                const totalWidth = word.length * letterWidth + (word.length - 1) * letterGap;
+                const startX = -totalWidth / 2;
+                const voxelGeo = new THREE.BoxGeometry(voxelSize * 0.94, voxelSize * 0.94, depth);
+
+                for (let li = 0; li < word.length; li++) {
+                    const ch = word[li];
+                    const pattern = LETTER_PATTERNS[ch];
+                    if (!pattern) continue;
+
+                    const letterGroup = new THREE.Group();
+                    const baseX = startX + li * (letterWidth + letterGap) + letterWidth / 2;
+                    letterGroup.position.set(baseX, yOffset, 0);
+
+                    for (let r = 0; r < pattern.length; r++) {
+                        for (let c = 0; c < pattern[r].length; c++) {
+                            if (pattern[r][c] === '1') {
+                                const cube = new THREE.Mesh(voxelGeo, material);
+                                cube.position.set(
+                                    (c - (colsPerLetter - 1) / 2) * voxelSize,
+                                    ((pattern.length - 1) / 2 - r) * voxelSize,
+                                    0
+                                );
+                                letterGroup.add(cube);
+                            }
+                        }
+                    }
+
+                    letterGroup.userData = {
+                        baseY: yOffset,
+                        baseZ: 0,
+                        index: li + rowIndex * 5,
+                        row: rowIndex
+                    };
+                    sohanSignGroup.add(letterGroup);
+                    sohanLetters.push(letterGroup);
+                }
+            }
+
+            add3DWord('SOHAN', 0.42, 0.175, 0.22, 0.24, sohanSignMat, 0);
+            add3DWord('STORE', -0.34, 0.135, 0.18, 0.22, sohanSignSubMat, 1);
+        }
+
+        function buildConfettiSystem() {
+            confettiGroup = new THREE.Group();
+            scene.add(confettiGroup);
+        }
+
+        function spawn3DConfetti(originX = 0) {
+            if (!confettiGroup) return;
+            const colors = [0xccff00, 0x06b6d4, 0xf97316, 0xf43f5e, 0xfacc15, 0xa855f7];
+            const geo = new THREE.BoxGeometry(0.08, 0.08, 0.02);
+            for (let i = 0; i < 42; i++) {
+                const mat = new THREE.MeshBasicMaterial({ color: colors[i % colors.length] });
+                const p = new THREE.Mesh(geo, mat);
+                p.position.set(originX + (Math.random() - 0.5) * 0.8, 1.8 + Math.random() * 0.6, (Math.random() - 0.5) * 0.6);
+                p.userData = {
+                    vx: (Math.random() - 0.5) * 3.8,
+                    vy: 2.2 + Math.random() * 3.0,
+                    vz: (Math.random() - 0.5) * 3.2,
+                    rx: (Math.random() - 0.5) * 8,
+                    ry: (Math.random() - 0.5) * 8,
+                    life: 1.8 + Math.random() * 0.8
+                };
+                confettiGroup.add(p);
+                confettiParticles.push(p);
+            }
+        }
+
+        /* ==========================================================================
+           4. BUILD ARTICULATED 3D STICKMAN ("UNIT-01") + WEARABLE GEAR
+           ========================================================================== */
+        function buildStickman() {
+            stickman.root = new THREE.Group();
+            scene.add(stickman.root);
+
+            stickman.baseMat = new THREE.MeshStandardMaterial({
+                color: 0xf4f4f5,
+                roughness: 0.35,
+                metalness: 0.15
+            });
+            stickman.jointMat = new THREE.MeshStandardMaterial({
+                color: 0x27272a,
+                roughness: 0.4,
+                metalness: 0.5
+            });
+
+            stickman.gear.hoodieMat = new THREE.MeshStandardMaterial({
+                color: PRODUCTS.hoodie.color,
+                roughness: 0.55,
+                metalness: 0.1
+            });
+            stickman.gear.sneakerMat = new THREE.MeshStandardMaterial({
+                color: PRODUCTS.sneakers.color,
+                roughness: 0.4,
+                metalness: 0.2
+            });
+            stickman.gear.glowMat = new THREE.MeshStandardMaterial({
+                color: PRODUCTS.visor.color,
+                emissive: PRODUCTS.visor.color,
+                emissiveIntensity: 0.75,
+                roughness: 0.15,
+                metalness: 0.7
+            });
+
+            const darkTrimMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.4, metalness: 0.5 });
+
+            // Hips (Root of body)
+            stickman.hips = new THREE.Group();
+            stickman.hips.position.y = 1.15;
+            stickman.root.add(stickman.hips);
+
+            const pelvis = new THREE.Mesh(new THREE.SphereGeometry(0.11, 20, 20), stickman.jointMat);
+            pelvis.castShadow = true;
+            stickman.hips.add(pelvis);
+
+            // Torso
+            stickman.torso = new THREE.Group();
+            stickman.hips.add(stickman.torso);
+
+            const spine = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.075, 0.68, 20), stickman.baseMat);
+            spine.position.y = 0.36;
+            spine.castShadow = true;
+            stickman.torso.add(spine);
+
+            // Hoodie Torso Shell + Hood Collar + Pocket
+            const hoodieBody = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.21, 0.72, 24), stickman.gear.hoodieMat);
+            hoodieBody.position.y = 0.36;
+            hoodieBody.castShadow = true;
+            stickman.torso.add(hoodieBody);
+            stickman.gear.hoodieParts.push(hoodieBody);
+
+            const hoodCollar = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.065, 14, 28), stickman.gear.hoodieMat);
+            hoodCollar.rotation.x = Math.PI / 2 + 0.2;
+            hoodCollar.position.set(0, 0.72, -0.04);
+            stickman.torso.add(hoodCollar);
+            stickman.gear.hoodieParts.push(hoodCollar);
+
+            const hoodiePocket = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.14, 0.08), darkTrimMat);
+            hoodiePocket.position.set(0, 0.16, 0.18);
+            stickman.torso.add(hoodiePocket);
+            stickman.gear.hoodieParts.push(hoodiePocket);
+
+            // Head
+            stickman.head = new THREE.Group();
+            stickman.head.position.y = 0.88;
+            stickman.torso.add(stickman.head);
+
+            const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.21, 28, 28), stickman.baseMat);
+            headMesh.castShadow = true;
+            stickman.head.add(headMesh);
+
+            // Minimalist Stickman Eyes
+            const eyeGeo = new THREE.SphereGeometry(0.024, 12, 12);
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0x09090b });
+            const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+            leftEye.position.set(-0.065, 0.02, 0.19);
+            const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+            rightEye.position.set(0.065, 0.02, 0.19);
+            stickman.head.add(leftEye, rightEye);
+
+            // ACCESSORY 1: PRISM VISOR (Head)
+            const visorGroup = new THREE.Group();
+            const visorLens = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.1, 0.14), stickman.gear.glowMat);
+            visorLens.position.set(0, 0.02, 0.15);
+            const visorStrap = new THREE.Mesh(new THREE.TorusGeometry(0.215, 0.018, 10, 32), darkTrimMat);
+            visorStrap.rotation.x = Math.PI / 2;
+            visorStrap.position.y = 0.02;
+            visorGroup.add(visorLens, visorStrap);
+            stickman.head.add(visorGroup);
+            stickman.gear.visorGroup = visorGroup;
+
+            // ACCESSORY 2: EXO-PACK (Torso Back)
+            const backpackGroup = new THREE.Group();
+            const packShell = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.44, 0.18), darkTrimMat);
+            packShell.position.set(0, 0.42, -0.24);
+            packShell.castShadow = true;
+            const packGlow = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.28, 0.04), stickman.gear.glowMat);
+            packGlow.position.set(0, 0.42, -0.34);
+            const thrusterL = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.065, 0.12, 16), stickman.gear.glowMat);
+            thrusterL.position.set(-0.1, 0.18, -0.25);
+            const thrusterR = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.065, 0.12, 16), stickman.gear.glowMat);
+            thrusterR.position.set(0.1, 0.18, -0.25);
+            backpackGroup.add(packShell, packGlow, thrusterL, thrusterR);
+            stickman.torso.add(backpackGroup);
+            stickman.gear.backpackGroup = backpackGroup;
+
+            // ACCESSORY 3: NEON CROWN (Head Top)
+            const crownGroup = new THREE.Group();
+            crownGroup.position.set(0, 0.21, 0);
+            const crownBand = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.14, 0.07, 16, 1, true), stickman.gear.glowMat);
+            crownGroup.add(crownBand);
+            for (let i = 0; i < 6; i++) {
+                const ang = (i / 6) * Math.PI * 2;
+                const spike = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.12, 6), stickman.gear.glowMat);
+                spike.position.set(Math.cos(ang) * 0.14, 0.08, Math.sin(ang) * 0.14);
+                crownGroup.add(spike);
+            }
+            stickman.head.add(crownGroup);
+            stickman.gear.crownGroup = crownGroup;
+
+            // ACCESSORY 4: STREET CAP (Head Top)
+            const capGroup = new THREE.Group();
+            capGroup.position.set(0, 0.09, 0);
+            const capDome = new THREE.Mesh(
+                new THREE.SphereGeometry(0.225, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.52),
+                darkTrimMat
+            );
+            const capBrim = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.025, 0.22), stickman.gear.glowMat);
+            capBrim.position.set(0, 0.01, 0.19);
+            capBrim.rotation.x = 0.08;
+            capGroup.add(capDome, capBrim);
+            stickman.head.add(capGroup);
+            stickman.gear.capGroup = capGroup;
+
+            // Helper to create articulated limbs
+            function createArm(side) {
+                const sign = side === 'left' ? -1 : 1;
+                const shoulder = new THREE.Group();
+                shoulder.position.set(sign * 0.23, 0.64, 0);
+                stickman.torso.add(shoulder);
+
+                const shoulderJoint = new THREE.Mesh(new THREE.SphereGeometry(0.065, 16, 16), stickman.jointMat);
+                shoulder.add(shoulderJoint);
+
+                const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.048, 0.36, 16), stickman.baseMat);
+                upper.position.y = -0.18;
+                upper.castShadow = true;
+                shoulder.add(upper);
+
+                // Hoodie Upper Sleeve
+                const sleeveUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.082, 0.072, 0.34, 16), stickman.gear.hoodieMat);
+                sleeveUpper.position.y = -0.17;
+                shoulder.add(sleeveUpper);
+                stickman.gear.hoodieParts.push(sleeveUpper);
+
+                const forearm = new THREE.Group();
+                forearm.position.y = -0.36;
+                shoulder.add(forearm);
+
+                const elbow = new THREE.Mesh(new THREE.SphereGeometry(0.052, 14, 14), stickman.jointMat);
+                forearm.add(elbow);
+
+                const lower = new THREE.Mesh(new THREE.CylinderGeometry(0.046, 0.04, 0.34, 16), stickman.baseMat);
+                lower.position.y = -0.17;
+                lower.castShadow = true;
+                forearm.add(lower);
+
+                // Hoodie Lower Sleeve
+                const sleeveLower = new THREE.Mesh(new THREE.CylinderGeometry(0.068, 0.058, 0.26, 16), stickman.gear.hoodieMat);
+                sleeveLower.position.y = -0.13;
+                forearm.add(sleeveLower);
+                stickman.gear.hoodieParts.push(sleeveLower);
+
+                const hand = new THREE.Mesh(new THREE.SphereGeometry(0.058, 14, 14), stickman.baseMat);
+                hand.position.y = -0.35;
+                forearm.add(hand);
+
+                return { shoulder, forearm };
+            }
+
+            const leftArm = createArm('left');
+            stickman.leftUpperArm = leftArm.shoulder;
+            stickman.leftForearm = leftArm.forearm;
+
+            const rightArm = createArm('right');
+            stickman.rightUpperArm = rightArm.shoulder;
+            stickman.rightForearm = rightArm.forearm;
+
+            // ACCESSORY 5: CYBER KATANA (Right Hand)
+            const katanaGroup = new THREE.Group();
+            katanaGroup.position.set(0, -0.36, 0.04);
+            katanaGroup.rotation.x = Math.PI / 2;
+            const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.24, 12), darkTrimMat);
+            const guard = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.025, 0.06), stickman.gear.glowMat);
+            guard.position.y = 0.12;
+            const blade = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.92, 0.048), stickman.gear.glowMat);
+            blade.position.y = 0.59;
+            katanaGroup.add(handle, guard, blade);
+            stickman.rightForearm.add(katanaGroup);
+            stickman.gear.katanaGroup = katanaGroup;
+
+            // ACCESSORY 6: HEX ENERGY SHIELD (Left Forearm)
+            const shieldGroup = new THREE.Group();
+            shieldGroup.position.set(-0.08, -0.22, 0.06);
+            shieldGroup.rotation.y = -Math.PI / 2;
+            const shieldMat = new THREE.MeshStandardMaterial({
+                color: PRODUCTS.visor.color,
+                emissive: PRODUCTS.visor.color,
+                emissiveIntensity: 0.6,
+                transparent: true,
+                opacity: 0.65,
+                roughness: 0.1,
+                metalness: 0.4
+            });
+            const hexPlate = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.03, 6), shieldMat);
+            hexPlate.rotation.x = Math.PI / 2;
+            const hexRim = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.025, 8, 6), stickman.gear.glowMat);
+            shieldGroup.add(hexPlate, hexRim);
+            stickman.leftForearm.add(shieldGroup);
+            stickman.gear.shieldGroup = shieldGroup;
+            stickman.gear.shieldPlateMat = shieldMat;
+
+            // Legs & Kinetic Sneakers
+            function createLeg(side) {
+                const sign = side === 'left' ? -1 : 1;
+                const thigh = new THREE.Group();
+                thigh.position.set(sign * 0.13, -0.02, 0);
+                stickman.hips.add(thigh);
+
+                const upperLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.054, 0.52, 16), stickman.baseMat);
+                upperLeg.position.y = -0.26;
+                upperLeg.castShadow = true;
+                thigh.add(upperLeg);
+
+                const shin = new THREE.Group();
+                shin.position.y = -0.52;
+                thigh.add(shin);
+
+                const knee = new THREE.Mesh(new THREE.SphereGeometry(0.056, 14, 14), stickman.jointMat);
+                shin.add(knee);
+
+                const lowerLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.044, 0.52, 16), stickman.baseMat);
+                lowerLeg.position.y = -0.26;
+                lowerLeg.castShadow = true;
+                shin.add(lowerLeg);
+
+                // Bare stickman foot
+                const baseFoot = new THREE.Mesh(new THREE.SphereGeometry(0.055, 14, 14), stickman.jointMat);
+                baseFoot.position.set(0, -0.54, 0.03);
+                shin.add(baseFoot);
+
+                // Kinetic Pulse Sneaker
+                const sneakerGroup = new THREE.Group();
+                sneakerGroup.position.set(0, -0.52, 0.05);
+                const sole = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.065, 0.31), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 }));
+                sole.position.y = -0.04;
+                const upperShoe = new THREE.Mesh(new THREE.BoxGeometry(0.135, 0.1, 0.25), stickman.gear.sneakerMat);
+                upperShoe.position.set(0, 0.02, -0.01);
+                upperShoe.castShadow = true;
+                const accentStripe = new THREE.Mesh(new THREE.BoxGeometry(0.142, 0.024, 0.18), darkTrimMat);
+                accentStripe.position.set(0, 0.015, 0.01);
+                sneakerGroup.add(sole, upperShoe, accentStripe);
+                shin.add(sneakerGroup);
+                stickman.gear.sneakerParts.push(sneakerGroup);
+
+                return { thigh, shin };
+            }
+
+            const leftLeg = createLeg('left');
+            stickman.leftThigh = leftLeg.thigh;
+            stickman.leftShin = leftLeg.shin;
+
+            const rightLeg = createLeg('right');
+            stickman.rightThigh = rightLeg.thigh;
+            stickman.rightShin = rightLeg.shin;
+        }
+
+        /* ==========================================================================
+           5. POINTER, TOUCH & SCROLL HANDLING (MOBILE + DESKTOP FRIENDLY)
+           ========================================================================== */
+        function setupPointerEvents() {
+            const onDown = (clientX, clientY, target, isTouch = false) => {
+                if (target && target.closest('button, a, aside, #checkout-modal, #game-hud')) return;
+                isDragging = true;
+                touchGestureLocked = isTouch ? null : 'spin';
+                startPointer.x = clientX;
+                startPointer.y = clientY;
+                prevPointer.x = clientX;
+                prevPointer.y = clientY;
+                const hint = document.getElementById('drag-hint');
+                if (hint) hint.style.opacity = '0';
+            };
+
+            const onMove = (clientX, clientY, isTouch = false) => {
+                pointerNDC.x = (clientX / Math.max(1, window.innerWidth)) * 2 - 1;
+                pointerNDC.y = -(clientY / Math.max(1, window.innerHeight)) * 2 + 1;
+
+                if (!isDragging) return;
+
+                // Smart touch lock: horizontal drag spins 3D model, vertical drag scrolls page
+                if (isTouch && touchGestureLocked === null) {
+                    const totalDx = Math.abs(clientX - startPointer.x);
+                    const totalDy = Math.abs(clientY - startPointer.y);
+                    if (totalDx > 6 || totalDy > 6) {
+                        touchGestureLocked = totalDx >= totalDy ? 'spin' : 'scroll';
+                    } else {
+                        return;
+                    }
+                }
+                if (touchGestureLocked === 'scroll') return;
+
+                const dx = clientX - prevPointer.x;
+                const dy = clientY - prevPointer.y;
+                prevPointer.x = clientX;
+                prevPointer.y = clientY;
+
+                targetUserOrbitY += dx * 0.0095;
+                targetUserOrbitX = Math.max(-0.45, Math.min(0.45, targetUserOrbitX + dy * 0.005));
+            };
+
+            const onUp = () => {
+                isDragging = false;
+                touchGestureLocked = null;
+            };
+
+            window.addEventListener('mousedown', (e) => onDown(e.clientX, e.clientY, e.target, false));
+            window.addEventListener('mousemove', (e) => onMove(e.clientX, e.clientY, false));
+            window.addEventListener('mouseup', onUp);
+            window.addEventListener('mouseleave', onUp);
+
+            window.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    onDown(e.touches[0].clientX, e.touches[0].clientY, e.target, true);
+                }
+            }, { passive: true });
+            window.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1) {
+                    onMove(e.touches[0].clientX, e.touches[0].clientY, true);
+                }
+            }, { passive: true });
+            window.addEventListener('touchend', onUp);
+            window.addEventListener('touchcancel', onUp);
+        }
+
+        function onScroll() {
+            const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+            targetScrollProgress = Math.max(0, Math.min(1, window.scrollY / maxScroll));
+
+            const sectionIdx = Math.min(4, Math.max(0, Math.round(targetScrollProgress * 4)));
+            if (sectionIdx !== currentSectionIndex) {
+                currentSectionIndex = sectionIdx;
+                updateScrollIndicators(sectionIdx);
+            }
+        }
+
+        function updateScrollIndicators(activeIdx) {
+            document.querySelectorAll('.scroll-dot').forEach((dot) => {
+                dot.classList.toggle('active', Number(dot.dataset.dot) === activeIdx);
+            });
+            document.querySelectorAll('.nav-pill').forEach((pill) => {
+                pill.classList.toggle('active', Number(pill.dataset.nav) === activeIdx);
+            });
+        }
+
+        function getScrollKeyframes() {
+            const aspect = window.innerWidth / Math.max(1, window.innerHeight);
+            const isCompact = window.innerWidth < 1024;
+            const xShift = isCompact ? 0 : 1.55;
+            const zBoost = aspect < 0.85 ? 1.85 : (aspect < 1.15 ? 0.9 : 0);
+
+            return [
+                // 0: Hero
+                { cam: [0, 2.05, 6.2 + zBoost], look: [0, 1.55, 0], modelX: xShift, modelRotY: -0.25 },
+                // 1: Hoodie
+                { cam: [0, 2.15, 4.7 + zBoost], look: [0, 1.75, 0], modelX: -xShift, modelRotY: 0.35 },
+                // 2: Sneakers
+                { cam: [0.2, 0.95, 4.2 + zBoost], look: [0, 0.72, 0], modelX: xShift, modelRotY: -0.45 },
+                // 3: Accessories Lab
+                { cam: [0, 2.35, 4.5 + zBoost], look: [0, 1.85, 0], modelX: -xShift, modelRotY: 0.45 },
+                // 4: 360 Studio
+                { cam: [0, 1.9, 5.6 + zBoost], look: [0, 1.35, 0], modelX: 0, modelRotY: 0 }
+            ];
+        }
+
+        /* ==========================================================================
+           6. STICKMAN ANIMATION & UNIQUE ACCESSORY POSES
+           ========================================================================== */
+        function animateStickman(t, scrollProg) {
+            if (!stickman.hips) return;
+
+            const sectionFloat = scrollProg * 4;
+            const activeIdx = Math.round(sectionFloat);
+
+            // Determine active pose mode
+            let mode = 'idle';
+            let poseTitle = 'Studio Idle';
+
+            if (accessoryPoseOverride) {
+                mode = accessoryPoseOverride;
+                const found = ACCESSORY_KEYS.find((k) => PRODUCTS[k].pose === accessoryPoseOverride);
+                poseTitle = found ? PRODUCTS[found].poseLabel : 'Signature Pose';
+            } else if (activeIdx === 0) {
+                mode = 'wave';
+                poseTitle = 'Hero Wave';
+            } else if (activeIdx === 2) {
+                mode = 'run';
+                poseTitle = 'Stride Test';
+            } else if (activeIdx === 4) {
+                mode = studioPose;
+                const labels = { idle: 'Studio Idle', run: 'Jog Cycle', dance: 'Victory Dance', hero: 'Power Stance' };
+                poseTitle = labels[studioPose] || 'Studio Idle';
+            } else {
+                mode = 'idle';
+                poseTitle = activeIdx === 1 ? 'Hoodie Showcase' : 'Gear Ready';
+            }
+
+            const poseLabelEl = document.getElementById('live-pose-label');
+            if (poseLabelEl && poseLabelEl.textContent !== poseTitle) {
+                poseLabelEl.textContent = poseTitle;
+            }
+
+            // Target joint rotations
+            let hipsY = 1.15 + Math.sin(t * 2.2) * 0.02;
+            let torsoX = 0, torsoY = 0, torsoZ = 0;
+            let headX = -pointerNDC.y * 0.14, headY = pointerNDC.x * 0.22, headZ = 0;
+
+            let lArmX = 0.06, lArmZ = 0.16, lForeX = -0.18;
+            let rArmX = 0.06, rArmZ = -0.16, rForeX = -0.18;
+
+            let lThighX = 0, lThighZ = 0.04, lShinX = 0;
+            let rThighX = 0, rThighZ = -0.04, rShinX = 0;
+
+            if (mode === 'wave') {
+                rArmZ = -2.35 + Math.sin(t * 6.5) * 0.28;
+                rArmX = -0.2;
+                rForeX = -0.55 + Math.sin(t * 6.5) * 0.25;
+                lArmZ = 0.25;
+                torsoZ = 0.06;
+            } else if (mode === 'run') {
+                const s = Math.sin(t * 9.5);
+                const c = Math.cos(t * 9.5);
+                hipsY = 1.12 + Math.abs(c) * 0.09;
+                torsoX = 0.18;
+                torsoY = s * 0.16;
+                lThighX = s * 0.72;
+                lShinX = Math.max(0, -c) * 0.95;
+                rThighX = -s * 0.72;
+                rShinX = Math.max(0, c) * 0.95;
+                lArmX = -s * 0.65;
+                lForeX = -1.1;
+                rArmX = s * 0.65;
+                rForeX = -1.1;
+            } else if (mode === 'dance') {
+                const b = Math.sin(t * 7.5);
+                hipsY = 1.1 + Math.abs(b) * 0.14;
+                torsoZ = b * 0.18;
+                torsoY = Math.cos(t * 3.75) * 0.35;
+                lArmZ = 1.9 + b * 0.55;
+                lForeX = -0.8;
+                rArmZ = -1.9 + b * 0.55;
+                rForeX = -0.8;
+                lThighX = Math.max(0, b) * 0.45;
+                lShinX = Math.max(0, b) * 0.5;
+                rThighX = Math.max(0, -b) * 0.45;
+                rShinX = Math.max(0, -b) * 0.5;
+            } else if (mode === 'hero') {
+                hipsY = 1.12;
+                torsoX = -0.08;
+                lArmZ = 0.52;
+                lArmX = -0.15;
+                lForeX = -0.95;
+                rArmZ = -0.52;
+                rArmX = -0.15;
+                rForeX = -0.95;
+                lThighZ = 0.18;
+                rThighZ = -0.18;
+            } else if (mode === 'scan') {
+                // Prism Visor: Cyber Scan
+                headY = Math.sin(t * 2.4) * 0.52;
+                rArmX = -1.25;
+                rArmZ = -0.35;
+                rForeX = -1.45;
+                lArmZ = 0.28;
+                torsoY = Math.sin(t * 2.4) * 0.12;
+            } else if (mode === 'jetpack') {
+                // Exo-Pack: Jet Hover
+                hipsY = 1.48 + Math.sin(t * 4.2) * 0.14;
+                torsoX = 0.22;
+                lArmZ = 0.65 + Math.sin(t * 4.2) * 0.12;
+                rArmZ = -0.65 - Math.sin(t * 4.2) * 0.12;
+                lThighX = 0.25;
+                lShinX = 0.45;
+                rThighX = -0.12;
+                rShinX = 0.65;
+            } else if (mode === 'royal') {
+                // Neon Crown: Royal Salute
+                headX = -0.12;
+                lArmZ = 0.58;
+                lForeX = -1.1;
+                rArmZ = -2.1 + Math.sin(t * 4) * 0.15;
+                rForeX = -0.45;
+                torsoZ = -0.05;
+            } else if (mode === 'samurai') {
+                // Cyber Katana: Samurai Stance
+                hipsY = 1.02;
+                torsoY = -0.42;
+                torsoX = 0.14;
+                rArmX = -1.15 + Math.sin(t * 2.5) * 0.08;
+                rArmZ = -0.25;
+                rForeX = -0.45;
+                lArmX = -0.85;
+                lArmZ = 0.55;
+                lForeX = -0.95;
+                lThighX = -0.38;
+                lShinX = 0.52;
+                rThighX = 0.32;
+                rShinX = 0.25;
+            } else if (mode === 'swagger') {
+                // Street Cap: Brim Tip
+                torsoZ = -0.1;
+                headZ = 0.12;
+                rArmX = -1.45;
+                rArmZ = -0.25;
+                rForeX = -1.35 + Math.sin(t * 3.5) * 0.12;
+                lArmZ = 0.32;
+                lThighZ = 0.12;
+                rThighZ = -0.12;
+            } else if (mode === 'guard') {
+                // Hex Shield: Defensive Guard Stance
+                hipsY = 1.05;
+                torsoY = 0.48;
+                lArmX = -1.18;
+                lArmZ = 0.35;
+                lForeX = -0.65;
+                rArmX = -0.45;
+                rArmZ = -0.55;
+                rForeX = -1.1;
+                lThighX = -0.3;
+                lShinX = 0.42;
+                rThighX = 0.28;
+                rShinX = 0.28;
+            }
+
+            // Smooth interpolation for fluid transitions
+            const k = 0.12;
+            stickman.hips.position.y = lerp(stickman.hips.position.y, hipsY, k);
+            stickman.torso.rotation.x = lerp(stickman.torso.rotation.x, torsoX, k);
+            stickman.torso.rotation.y = lerp(stickman.torso.rotation.y, torsoY, k);
+            stickman.torso.rotation.z = lerp(stickman.torso.rotation.z, torsoZ, k);
+
+            stickman.head.rotation.x = lerp(stickman.head.rotation.x, headX, k);
+            stickman.head.rotation.y = lerp(stickman.head.rotation.y, headY, k);
+            stickman.head.rotation.z = lerp(stickman.head.rotation.z, headZ, k);
+
+            stickman.leftUpperArm.rotation.x = lerp(stickman.leftUpperArm.rotation.x, lArmX, k);
+            stickman.leftUpperArm.rotation.z = lerp(stickman.leftUpperArm.rotation.z, lArmZ, k);
+            stickman.leftForearm.rotation.x = lerp(stickman.leftForearm.rotation.x, lForeX, k);
+
+            stickman.rightUpperArm.rotation.x = lerp(stickman.rightUpperArm.rotation.x, rArmX, k);
+            stickman.rightUpperArm.rotation.z = lerp(stickman.rightUpperArm.rotation.z, rArmZ, k);
+            stickman.rightForearm.rotation.x = lerp(stickman.rightForearm.rotation.x, rForeX, k);
+
+            stickman.leftThigh.rotation.x = lerp(stickman.leftThigh.rotation.x, lThighX, k);
+            stickman.leftThigh.rotation.z = lerp(stickman.leftThigh.rotation.z, lThighZ, k);
+            stickman.leftShin.rotation.x = lerp(stickman.leftShin.rotation.x, lShinX, k);
+
+            stickman.rightThigh.rotation.x = lerp(stickman.rightThigh.rotation.x, rThighX, k);
+            stickman.rightThigh.rotation.z = lerp(stickman.rightThigh.rotation.z, rThighZ, k);
+            stickman.rightShin.rotation.x = lerp(stickman.rightShin.rotation.x, rShinX, k);
+        }
+
+        /* ==========================================================================
+           7. MAIN RENDER LOOP & MINIMIZED-TAB / RESIZE HANDLING
+           ========================================================================== */
+        function animate() {
+            requestAnimationFrame(animate);
+            if (!renderer || !scene || !camera || !clock) return;
+
+            // Clamped delta keeps motion smooth after tab minimize/restore
+            const dt = Math.min(clock.getDelta(), 0.05);
+            elapsedTime += dt;
+            const t = elapsedTime;
+
+            lastSmoothScroll = smoothScrollProgress;
+            smoothScrollProgress = lerp(smoothScrollProgress, targetScrollProgress, 0.07);
+            scrollVelocity = lerp(scrollVelocity, (smoothScrollProgress - lastSmoothScroll) * 60, 0.15);
+
+            userOrbitY = lerp(userOrbitY, targetUserOrbitY, 0.1);
+            userOrbitX = lerp(userOrbitX, targetUserOrbitX, 0.1);
+
+            const kf = getScrollKeyframes();
+            const scaled = smoothScrollProgress * (kf.length - 1);
+            const idxA = Math.min(kf.length - 1, Math.floor(scaled));
+            const idxB = Math.min(kf.length - 1, idxA + 1);
+            const frac = scaled - idxA;
+
+            const camX = lerp(kf[idxA].cam[0], kf[idxB].cam[0], frac);
+            const camY = lerp(kf[idxA].cam[1], kf[idxB].cam[1], frac) + userOrbitX * 2.2;
+            const camZ = lerp(kf[idxA].cam[2], kf[idxB].cam[2], frac);
+
+            const lookX = lerp(kf[idxA].look[0], kf[idxB].look[0], frac);
+            const lookY = lerp(kf[idxA].look[1], kf[idxB].look[1], frac);
+            const lookZ = lerp(kf[idxA].look[2], kf[idxB].look[2], frac);
+
+            const modelX = lerp(kf[idxA].modelX, kf[idxB].modelX, frac);
+            const baseRotY = lerp(kf[idxA].modelRotY, kf[idxB].modelRotY, frac);
+
+            if (stickman.root && floorGroup) {
+                stickman.root.position.x = modelX;
+                floorGroup.position.x = modelX;
+                stickman.root.rotation.y = baseRotY + userOrbitY;
+            }
+
+            // Animate 3D "SOHAN STORE" Background Sign interactively with scroll & orbit
+            if (sohanSignGroup) {
+                const aspect = window.innerWidth / Math.max(1, window.innerHeight);
+                const responsiveScale = aspect < 0.75 ? 0.56 : (aspect < 1.05 ? 0.74 : 0.96);
+                sohanSignGroup.scale.setScalar(responsiveScale);
+
+                sohanSignGroup.position.x = lerp(sohanSignGroup.position.x, modelX * 0.65, 0.08);
+                sohanSignGroup.position.y = lerp(
+                    sohanSignGroup.position.y,
+                    2.65 + Math.sin(smoothScrollProgress * Math.PI * 2) * 0.25,
+                    0.08
+                );
+                sohanSignGroup.position.z = lerp(
+                    sohanSignGroup.position.z,
+                    -3.35 - Math.abs(Math.sin(smoothScrollProgress * Math.PI)) * 0.55,
+                    0.08
+                );
+
+                const targetSignRotY = baseRotY * 0.45 + userOrbitY * 0.25 + pointerNDC.x * 0.08;
+                const targetSignRotX = Math.max(-0.22, Math.min(0.22, -scrollVelocity * 0.35 + pointerNDC.y * 0.05));
+                sohanSignGroup.rotation.y = lerp(sohanSignGroup.rotation.y, targetSignRotY, 0.08);
+                sohanSignGroup.rotation.x = lerp(sohanSignGroup.rotation.x, targetSignRotX, 0.08);
+
+                for (let i = 0; i < sohanLetters.length; i++) {
+                    const lg = sohanLetters[i];
+                    const wavePhase = t * 2.2 + lg.userData.index * 0.45 + smoothScrollProgress * 12.0;
+                    lg.position.y = lg.userData.baseY + Math.sin(wavePhase) * 0.045;
+                    lg.position.z = lg.userData.baseZ + Math.cos(wavePhase) * 0.08 + Math.min(0.25, Math.abs(scrollVelocity) * 0.4);
+                    lg.rotation.y = Math.sin(wavePhase * 0.7) * 0.06;
+                }
+            }
+
+            // Update 3D Confetti Particles
+            for (let i = confettiParticles.length - 1; i >= 0; i--) {
+                const p = confettiParticles[i];
+                p.userData.life -= dt;
+                if (p.userData.life <= 0) {
+                    confettiGroup.remove(p);
+                    confettiParticles.splice(i, 1);
+                    continue;
+                }
+                p.userData.vy -= 5.8 * dt;
+                p.position.x += p.userData.vx * dt;
+                p.position.y += p.userData.vy * dt;
+                p.position.z += p.userData.vz * dt;
+                p.rotation.x += p.userData.rx * dt;
+                p.rotation.y += p.userData.ry * dt;
+            }
+
+            camera.position.set(camX, Math.max(0.5, camY), camZ);
+            camera.lookAt(lookX, lookY, lookZ);
+
+            animateStickman(t, smoothScrollProgress);
+
+            if (ringMesh) ringMesh.scale.setScalar(1 + Math.sin(t * 2) * 0.012);
+            floatingShapes.forEach((mesh) => {
+                mesh.position.y = mesh.userData.baseY + Math.sin(t * mesh.userData.speed + mesh.userData.phase) * 0.25;
+                mesh.rotation.x += 0.24 * dt;
+                mesh.rotation.y += 0.36 * dt;
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            if (!camera || !renderer) return;
+            const w = Math.max(1, window.innerWidth);
+            const h = Math.max(1, window.innerHeight);
+            const aspect = w / h;
+            camera.aspect = aspect;
+            camera.fov = aspect < 0.75 ? 48 : 42;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+            onScroll();
+        }
+
+        function handleVisibilityChange() {
+            if (document.hidden) {
+                if (gameState.active && gameState.timerInterval) {
+                    clearInterval(gameState.timerInterval);
+                    gameState.timerInterval = null;
+                    gameState.pausedByVisibility = true;
+                }
+                if (reflexGame.active && reflexGame.interval) {
+                    clearInterval(reflexGame.interval);
+                    reflexGame.interval = null;
+                    reflexGame.pausedByVisibility = true;
+                }
+            } else {
+                if (clock) clock.getDelta();
+                if (gameState.active && gameState.pausedByVisibility) {
+                    gameState.pausedByVisibility = false;
+                    startMissionTimer();
+                }
+                if (reflexGame.active && reflexGame.pausedByVisibility) {
+                    reflexGame.pausedByVisibility = false;
+                    startReflexTick();
+                }
+                onWindowResize();
+            }
+        }
+
+        /* ==========================================================================
+           8. WEARABLES, ACCESSORIES & STUDIO CONTROLS
+           ========================================================================== */
+        function applyGearVisibility() {
+            if (!stickman.gear.visorGroup) return;
+            stickman.gear.hoodieParts.forEach((m) => { m.visible = PRODUCTS.hoodie.equipped; });
+            stickman.gear.sneakerParts.forEach((m) => { m.visible = PRODUCTS.sneakers.equipped; });
+            stickman.gear.visorGroup.visible = PRODUCTS.visor.equipped;
+            stickman.gear.backpackGroup.visible = PRODUCTS.backpack.equipped;
+            stickman.gear.crownGroup.visible = PRODUCTS.crown.equipped;
+            stickman.gear.katanaGroup.visible = PRODUCTS.katana.equipped;
+            stickman.gear.capGroup.visible = PRODUCTS.cap.equipped;
+            stickman.gear.shieldGroup.visible = PRODUCTS.shield.equipped;
+        }
+
+        function updateEquipButtons() {
+            const hoodieBtn = document.getElementById('equip-btn-hoodie');
+            if (hoodieBtn) hoodieBtn.textContent = PRODUCTS.hoodie.equipped ? 'Wearing ✓' : 'Try On';
+
+            const sneakerBtn = document.getElementById('equip-btn-sneakers');
+            if (sneakerBtn) sneakerBtn.textContent = PRODUCTS.sneakers.equipped ? 'Wearing ✓' : 'Try On';
+
+            ACCESSORY_KEYS.forEach((key) => {
+                const card = document.getElementById(`acc-card-${key}`);
+                if (card) card.classList.toggle('equipped', PRODUCTS[key].equipped);
+            });
+
+            Object.keys(PRODUCTS).forEach((key) => {
+                const stBtn = document.getElementById(`studio-toggle-${key}`);
+                if (stBtn) {
+                    stBtn.classList.toggle('border-volt', PRODUCTS[key].equipped);
+                    stBtn.classList.toggle('text-volt', PRODUCTS[key].equipped);
+                }
+            });
+
+            syncEquippedLoadoutBar();
+        }
+
+        function toggleEquip(itemKey) {
+            const item = PRODUCTS[itemKey];
+            if (!item) return;
+            item.equipped = !item.equipped;
+            applyGearVisibility();
+            updateEquipButtons();
+            if (gameState.active) renderGameHud();
+            playGameTone(item.equipped ? 540 : 340, 0.08, 'sine', 0.06);
+            showToast(item.equipped ? `Equipped ${item.name}` : `Removed ${item.name}`);
+        }
+
+        function selectAccessory(accKey, silent = false) {
+            const acc = PRODUCTS[accKey];
+            if (!acc) return;
+
+            acc.equipped = !acc.equipped;
+
+            // Avoid clipping between Crown and Cap on top of the head
+            if (acc.equipped && accKey === 'crown') PRODUCTS.cap.equipped = false;
+            if (acc.equipped && accKey === 'cap') PRODUCTS.crown.equipped = false;
+
+            if (acc.equipped) {
+                accessoryPoseOverride = acc.pose;
+                if (!silent) showToast(`Equipped ${acc.name} — Pose: ${acc.poseLabel}`);
+            } else {
+                const nextEquipped = ACCESSORY_KEYS.find((k) => PRODUCTS[k].equipped);
+                accessoryPoseOverride = nextEquipped ? PRODUCTS[nextEquipped].pose : null;
+                if (!silent) showToast(`Removed ${acc.name}`);
+            }
+
+            applyGearVisibility();
+            updateEquipButtons();
+            if (gameState.active) renderGameHud();
+            if (!silent) playGameTone(acc.equipped ? 620 : 360, 0.09, 'triangle', 0.06);
+        }
+
+        function clearAllAccessories() {
+            ACCESSORY_KEYS.forEach((k) => { PRODUCTS[k].equipped = false; });
+            accessoryPoseOverride = null;
+            applyGearVisibility();
+            updateEquipButtons();
+            if (gameState.active) renderGameHud();
+            showToast('Cleared all accessories');
+        }
+
+        function setItemColor(itemKey, hex, colorName, btnEl) {
+            if (itemKey === 'hoodie') {
+                PRODUCTS.hoodie.color = hex;
+                PRODUCTS.hoodie.colorName = colorName;
+                if (stickman.gear.hoodieMat) stickman.gear.hoodieMat.color.set(hex);
+                const label = document.getElementById('hoodie-color-name');
+                if (label) label.textContent = colorName;
+            } else if (itemKey === 'sneakers') {
+                PRODUCTS.sneakers.color = hex;
+                PRODUCTS.sneakers.colorName = colorName;
+                if (stickman.gear.sneakerMat) stickman.gear.sneakerMat.color.set(hex);
+                const label = document.getElementById('sneakers-color-name');
+                if (label) label.textContent = colorName;
+            } else if (itemKey === 'visor') {
+                ACCESSORY_KEYS.forEach((k) => {
+                    PRODUCTS[k].color = hex;
+                    PRODUCTS[k].colorName = colorName;
+                });
+                if (stickman.gear.glowMat) {
+                    stickman.gear.glowMat.color.set(hex);
+                    stickman.gear.glowMat.emissive.set(hex);
+                }
+                if (stickman.gear.shieldPlateMat) {
+                    stickman.gear.shieldPlateMat.color.set(hex);
+                    stickman.gear.shieldPlateMat.emissive.set(hex);
+                }
+                const label = document.getElementById('visor-color-name');
+                if (label) label.textContent = colorName;
+            }
+
+            if (btnEl && btnEl.parentElement) {
+                btnEl.parentElement.querySelectorAll('.swatch-btn').forEach((b) => b.classList.remove('active'));
+                btnEl.classList.add('active');
+            }
+            syncEquippedLoadoutBar();
+        }
+
+        function equipFullOutfit() {
+            PRODUCTS.hoodie.equipped = true;
+            PRODUCTS.sneakers.equipped = true;
+            PRODUCTS.visor.equipped = true;
+            PRODUCTS.backpack.equipped = true;
+            PRODUCTS.katana.equipped = true;
+            accessoryPoseOverride = 'samurai';
+            applyGearVisibility();
+            updateEquipButtons();
+            if (gameState.active) renderGameHud();
+            playGameTone(587.33, 0.12, 'triangle', 0.07);
+            showToast('Full SOHAN Drop equipped on Unit-01!');
+        }
+
+        function setStudioPose(pose) {
+            studioPose = pose;
+            accessoryPoseOverride = null;
+            showToast(`Studio Pose: ${pose.toUpperCase()}`);
+        }
+
+        function resetCameraOrbit() {
+            targetUserOrbitY = 0;
+            targetUserOrbitX = 0;
+            showToast('Camera angle reset');
+        }
+
+        function toggleStudioTheme() {
+            isLightMode = !isLightMode;
+            document.body.classList.toggle('light-studio', isLightMode);
+
+            document.getElementById('icon-sun').classList.toggle('hidden', !isLightMode);
+            document.getElementById('icon-moon').classList.toggle('hidden', isLightMode);
+            document.getElementById('theme-label').textContent = isLightMode ? 'Dark Studio' : 'Light Studio';
+
+            const bgHex = isLightMode ? 0xf4f4f5 : 0x09090b;
+            if (scene) {
+                scene.background.setHex(bgHex);
+                scene.fog.color.setHex(bgHex);
+            }
+            if (stickman.baseMat) stickman.baseMat.color.setHex(isLightMode ? 0x18181b : 0xf4f4f5);
+            if (stickman.jointMat) stickman.jointMat.color.setHex(isLightMode ? 0x52525b : 0x27272a);
+            if (ambientLight) ambientLight.intensity = isLightMode ? 0.85 : 0.55;
+
+            if (sohanSignMat && sohanSignSubMat && sohanSignFrameMat) {
+                sohanSignMat.color.setHex(isLightMode ? 0x18181b : 0xccff00);
+                sohanSignMat.emissive.setHex(isLightMode ? 0x4d7c0f : 0xccff00);
+                sohanSignMat.emissiveIntensity = isLightMode ? 0.25 : 0.72;
+                sohanSignSubMat.color.setHex(isLightMode ? 0x3f3f46 : 0xf4f4f5);
+                sohanSignSubMat.emissive.setHex(isLightMode ? 0x0284c7 : 0x38bdf8);
+                sohanSignSubMat.emissiveIntensity = isLightMode ? 0.2 : 0.45;
+                sohanSignFrameMat.color.setHex(isLightMode ? 0xd4d4d8 : 0x18181b);
+            }
+        }
+
+        /* ==========================================================================
+           9. STICKMAN CLOTHING STYLE GAME ENGINE
+           ========================================================================== */
+        function startStyleGame() {
+            gameState.active = true;
+            gameState.minimized = false;
+            document.getElementById('game-hud').classList.remove('hidden');
+            document.getElementById('game-hud-body').classList.remove('hidden');
+            document.getElementById('game-min-btn').textContent = '▾';
+            loadStyleMission(gameState.missionIndex);
+            playGameTone(523.25, 0.12, 'sine', 0.08);
+            setTimeout(() => playGameTone(659.25, 0.15, 'sine', 0.08), 110);
+            showToast('🎮 Style Challenge started! Dress Unit-01 to match the mission.');
+        }
+
+        function toggleGameHud() {
+            const hud = document.getElementById('game-hud');
+            if (hud.classList.contains('hidden')) {
+                startStyleGame();
+            } else {
+                hud.classList.add('hidden');
+                gameState.active = false;
+                if (gameState.timerInterval) {
+                    clearInterval(gameState.timerInterval);
+                    gameState.timerInterval = null;
+                }
+            }
+        }
+
+        function toggleGameHudMinimize() {
+            gameState.minimized = !gameState.minimized;
+            document.getElementById('game-hud-body').classList.toggle('hidden', gameState.minimized);
+            document.getElementById('game-min-btn').textContent = gameState.minimized ? '▸' : '▾';
+        }
+
+        function loadStyleMission(index) {
+            gameState.missionIndex = index % STYLE_MISSIONS.length;
+            const mission = STYLE_MISSIONS[gameState.missionIndex];
+            gameState.timeLeft = mission.timeLimit;
+            renderGameHud();
+            startMissionTimer();
+        }
+
+        function startMissionTimer() {
+            if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+            gameState.timerInterval = setInterval(() => {
+                if (!gameState.active || document.hidden) return;
+                gameState.timeLeft -= 1;
+                const pill = document.getElementById('game-timer-pill');
+                if (pill) {
+                    pill.textContent = `${Math.max(0, gameState.timeLeft)}s`;
+                    pill.classList.toggle('text-red-400', gameState.timeLeft <= 10);
+                }
+                if (gameState.timeLeft <= 0) {
+                    clearInterval(gameState.timerInterval);
+                    gameState.timerInterval = null;
+                    gameState.streak = 0;
+                    playGameTone(220, 0.25, 'sawtooth', 0.06);
+                    showToast('⏱ Time up! Loading next style mission.');
+                    loadStyleMission(gameState.missionIndex + 1);
+                }
+            }, 1000);
+        }
+
+        function renderGameHud() {
+            const mission = STYLE_MISSIONS[gameState.missionIndex];
+            document.getElementById('game-mission-title').textContent = `Mission ${gameState.missionIndex + 1}: ${mission.title}`;
+            document.getElementById('game-mission-desc').textContent = mission.desc;
+            document.getElementById('game-score').textContent = gameState.score;
+            document.getElementById('game-coins').textContent = `${gameState.coins} 🪙`;
+            document.getElementById('game-streak').textContent = `${gameState.streak} 🔥`;
+            document.getElementById('header-coins-badge').textContent = `${gameState.coins}🪙`;
+            document.getElementById('game-timer-pill').textContent = `${Math.max(0, gameState.timeLeft)}s`;
+
+            const checklist = document.getElementById('game-checklist');
+            checklist.innerHTML = mission.requiredItems.map((key) => {
+                const prod = PRODUCTS[key];
+                const done = prod.equipped;
+                return `
+                    <li class="flex items-center justify-between px-2.5 py-1.5 rounded-xl border ${done ? 'border-volt/50 bg-volt/15 text-volt' : 'border-white/10 bg-white/5'}">
+                        <span class="font-medium">${done ? '✓' : '○'} ${prod.name}</span>
+                        <button onclick="${prod.isAccessory ? `selectAccessory('${key}')` : `toggleEquip('${key}')`}" class="text-[10px] font-bold underline opacity-85 hover:opacity-100 px-1.5 py-0.5">
+                            ${done ? 'On' : 'Wear'}
+                        </button>
+                    </li>
+                `;
+            }).join('');
+        }
+
+        function judgePlayerFit() {
+            const mission = STYLE_MISSIONS[gameState.missionIndex];
+            const matched = mission.requiredItems.filter((k) => PRODUCTS[k].equipped).length;
+            const total = mission.requiredItems.length;
+
+            if (matched === total) {
+                const timeBonus = gameState.timeLeft * 5;
+                const earnedScore = 300 + timeBonus + gameState.streak * 50;
+                const earnedCoins = mission.rewardCoins;
+
+                gameState.score += earnedScore;
+                gameState.coins += earnedCoins;
+                gameState.streak += 1;
+
+                unlockBuyingStatus('Style Quest Complete!');
+                awardPlayerXP(120);
+
+                accessoryPoseOverride = mission.bonusPose;
+                spawn3DConfetti(stickman.root ? stickman.root.position.x : 0);
+                playGameTone(523.25, 0.1, 'triangle', 0.08);
+                setTimeout(() => playGameTone(659.25, 0.1, 'triangle', 0.08), 90);
+                setTimeout(() => playGameTone(783.99, 0.22, 'triangle', 0.09), 180);
+
+                showToast(`⭐⭐⭐ QUEST CLEARED! Buying UNLOCKED +${earnedCoins}🪙`);
+                renderCart();
+                loadStyleMission(gameState.missionIndex + 1);
+            } else {
+                const missing = total - matched;
+                playGameTone(260, 0.15, 'sawtooth', 0.05);
+                showToast(`Almost there! Equip ${missing} more item${missing > 1 ? 's' : ''} (tap "Wear" in checklist).`);
+            }
+        }
+
+        function randomizeStickmanFit() {
+            const hoodieColors = [['#ccff00', 'Volt Acid'], ['#ef4444', 'Signal Crimson'], ['#38bdf8', 'Glacier Cyan'], ['#a855f7', 'Ultraviolet'], ['#18181b', 'Stealth Carbon']];
+            const sneakerColors = [['#f97316', 'Hyper Orange'], ['#ccff00', 'Volt Acid'], ['#ec4899', 'Cyber Pink'], ['#ffffff', 'Chalk White']];
+            const glowColors = [['#06b6d4', 'Neon Cyan'], ['#facc15', 'Solar Gold'], ['#f43f5e', 'Laser Rose'], ['#a855f7', 'Plasma Violet'], ['#ccff00', 'Volt Acid']];
+
+            PRODUCTS.hoodie.equipped = Math.random() > 0.25;
+            PRODUCTS.sneakers.equipped = Math.random() > 0.2;
+
+            ACCESSORY_KEYS.forEach((k) => { PRODUCTS[k].equipped = false; });
+            const shuffled = [...ACCESSORY_KEYS].sort(() => Math.random() - 0.5);
+            const first = shuffled[0];
+            const second = shuffled.find((k) => k !== first && !((first === 'crown' && k === 'cap') || (first === 'cap' && k === 'crown')));
+            PRODUCTS[first].equipped = true;
+            if (second) PRODUCTS[second].equipped = true;
+            accessoryPoseOverride = PRODUCTS[first].pose;
+
+            const hc = hoodieColors[Math.floor(Math.random() * hoodieColors.length)];
+            const sc = sneakerColors[Math.floor(Math.random() * sneakerColors.length)];
+            const gc = glowColors[Math.floor(Math.random() * glowColors.length)];
+
+            setItemColor('hoodie', hc[0], hc[1], null);
+            setItemColor('sneakers', sc[0], sc[1], null);
+            setItemColor('visor', gc[0], gc[1], null);
+
+            applyGearVisibility();
+            updateEquipButtons();
+            if (gameState.active) renderGameHud();
+            playGameTone(460, 0.09, 'sine', 0.07);
+            showToast(`🎲 Randomized Fit! Pose: ${PRODUCTS[first].poseLabel}`);
+        }
+
+        function nextStyleMission() {
+            loadStyleMission(gameState.missionIndex + 1);
+            playGameTone(440, 0.08, 'sine', 0.06);
+            showToast(`Loaded: ${STYLE_MISSIONS[gameState.missionIndex].title}`);
+        }
+
+        /* ==========================================================================
+           9B. PLAY-TO-BUY SYSTEM & LIVE "WHAT STICKMAN WEARS" SYNC
+           ========================================================================== */
+        function getEquippedProducts() {
+            return Object.keys(PRODUCTS)
+                .filter((k) => PRODUCTS[k].equipped)
+                .map((k) => PRODUCTS[k]);
+        }
+
+        function syncEquippedLoadoutBar() {
+            const equipped = getEquippedProducts();
+            const total = equipped.reduce((sum, p) => sum + p.price, 0);
+            const itemsEl = document.getElementById('live-loadout-items');
+            const barLabel = document.getElementById('play-to-buy-bar-label');
+            const studioLabel = document.getElementById('studio-buy-fit-label');
+            const lockTag = document.getElementById('loadout-lock-tag');
+
+            if (itemsEl) {
+                itemsEl.textContent = equipped.length > 0
+                    ? equipped.map((p) => `${p.name} (${p.colorName})`).join(' • ')
+                    : 'No gear equipped — click any item to dress Unit-01!';
+            }
+
+            if (lockTag) {
+                if (playerStats.buyingUnlocked) {
+                    lockTag.textContent = '🔓 Buy Unlocked';
+                    lockTag.className = 'text-[10px] px-1.5 py-0.5 rounded-full bg-volt/20 text-volt font-bold';
+                } else {
+                    lockTag.textContent = '🔒 Play to Buy';
+                    lockTag.className = 'text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-semibold';
+                }
+            }
+
+            if (barLabel) {
+                if (equipped.length === 0) {
+                    barLabel.textContent = 'Equip Gear First';
+                } else if (playerStats.buyingUnlocked) {
+                    barLabel.textContent = `🛒 Buy Worn Fit ($${total})`;
+                } else {
+                    barLabel.textContent = `🎮 Play to Buy ($${total})`;
+                }
+            }
+
+            if (studioLabel) {
+                studioLabel.textContent = playerStats.buyingUnlocked
+                    ? `🛒 Buy Unit-01's Exact Worn Fit ($${total})`
+                    : `🎮 Play Challenge to Buy Unit-01's Worn Fit ($${total})`;
+            }
+        }
+
+        function updatePlayerStatsUI() {
+            const ranks = ['ROOKIE', 'STREET PRO', 'RUNWAY ACE', 'CYBER ICON', 'SOHAN LEGEND'];
+            const rankName = ranks[Math.min(ranks.length - 1, playerStats.level - 1)];
+            const lvlEl = document.getElementById('player-level-badge');
+            const rankEl = document.getElementById('player-rank-label');
+            const xpBar = document.getElementById('player-xp-bar');
+            const unlockPill = document.getElementById('shop-unlock-pill');
+
+            if (lvlEl) lvlEl.textContent = `LVL ${playerStats.level}`;
+            if (rankEl) rankEl.textContent = rankName;
+            if (xpBar) xpBar.style.width = `${Math.min(100, playerStats.xp)}%`;
+            if (unlockPill) {
+                if (playerStats.buyingUnlocked) {
+                    unlockPill.textContent = '🔓 Shop Unlocked';
+                    unlockPill.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-volt/20 text-volt border border-volt/40';
+                } else {
+                    unlockPill.textContent = '🔒 Play to Buy';
+                    unlockPill.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30';
+                }
+            }
+            document.getElementById('header-coins-badge').textContent = `${gameState.coins}🪙`;
+            syncEquippedLoadoutBar();
+        }
+
+        function awardPlayerXP(amount) {
+            playerStats.xp += amount;
+            while (playerStats.xp >= 100) {
+                playerStats.xp -= 100;
+                playerStats.level += 1;
+                showToast(`⬆️ LEVEL UP! You are now Level ${playerStats.level}!`);
+            }
+            updatePlayerStatsUI();
+        }
+
+        function unlockBuyingStatus() {
+            playerStats.buyingUnlocked = true;
+            playerStats.challengesWon += 1;
+            updatePlayerStatsUI();
+        }
+
+        function handleBuyEquippedAction() {
+            const equipped = getEquippedProducts();
+            if (equipped.length === 0) {
+                showToast('Dress Unit-01 with at least one item first!');
+                return;
+            }
+            if (!playerStats.buyingUnlocked) {
+                openPlayToBuyGame('__FULL_FIT__');
+                return;
+            }
+            addFullFitToCart(true);
+        }
+
+        function openPlayToBuyGame(pendingItemKey = '__FULL_FIT__') {
+            reflexGame.active = true;
+            reflexGame.round = 1;
+            reflexGame.pendingItemKey = pendingItemKey;
+            document.getElementById('play-to-buy-modal').classList.remove('hidden');
+            playGameTone(440, 0.08, 'sine', 0.07);
+            setTimeout(() => playGameTone(587.33, 0.1, 'sine', 0.07), 80);
+            startReflexRound();
+        }
+
+        function closePlayToBuyGame() {
+            reflexGame.active = false;
+            if (reflexGame.interval) {
+                clearInterval(reflexGame.interval);
+                reflexGame.interval = null;
+            }
+            document.getElementById('play-to-buy-modal').classList.add('hidden');
+        }
+
+        function startReflexRound() {
+            reflexGame.targetIndex = Math.floor(Math.random() * REFLEX_MOVES.length);
+            reflexGame.maxTimeMs = Math.max(2200, 3400 - (reflexGame.round - 1) * 350);
+            reflexGame.timeLeftMs = reflexGame.maxTimeMs;
+
+            const move = REFLEX_MOVES[reflexGame.targetIndex];
+            document.getElementById('reflex-round-label').textContent = `Round ${reflexGame.round} / ${reflexGame.totalRounds}`;
+            document.getElementById('reflex-target-move').textContent = move.label;
+            document.getElementById('reflex-timer-bar').style.width = '100%';
+
+            // Unit-01 previews the target pose live in 3D!
+            accessoryPoseOverride = move.pose;
+            startReflexTick();
+        }
+
+        function startReflexTick() {
+            if (reflexGame.interval) clearInterval(reflexGame.interval);
+            reflexGame.interval = setInterval(() => {
+                if (!reflexGame.active || document.hidden) return;
+                reflexGame.timeLeftMs -= 50;
+                const pct = Math.max(0, (reflexGame.timeLeftMs / reflexGame.maxTimeMs) * 100);
+                document.getElementById('reflex-timer-bar').style.width = `${pct}%`;
+
+                if (reflexGame.timeLeftMs <= 0) {
+                    clearInterval(reflexGame.interval);
+                    reflexGame.interval = null;
+                    playGameTone(210, 0.22, 'sawtooth', 0.07);
+                    showToast('⏱ Too slow! Retry the move to unlock buying.');
+                    reflexGame.round = 1;
+                    startReflexRound();
+                }
+            }, 50);
+        }
+
+        function handleReflexChoice(choiceIdx) {
+            if (!reflexGame.active) return;
+            if (choiceIdx === reflexGame.targetIndex) {
+                clearInterval(reflexGame.interval);
+                reflexGame.interval = null;
+
+                gameState.coins += 40;
+                gameState.score += 120;
+                awardPlayerXP(35);
+                spawn3DConfetti(stickman.root ? stickman.root.position.x : 0);
+                playGameTone(523.25 + reflexGame.round * 110, 0.12, 'triangle', 0.08);
+
+                if (reflexGame.round >= reflexGame.totalRounds) {
+                    // Victory! Unlock buying and fulfill pending purchase action
+                    closePlayToBuyGame();
+                    unlockBuyingStatus();
+                    studioPose = 'dance';
+                    accessoryPoseOverride = null;
+                    playGameTone(783.99, 0.24, 'triangle', 0.09);
+                    showToast('🏆 VICTORY! Buying UNLOCKED! Adding Unit-01\'s worn gear to Bag!');
+
+                    if (reflexGame.pendingItemKey === '__FULL_FIT__') {
+                        addFullFitToCart(true);
+                    } else if (reflexGame.pendingItemKey === '__ACCESSORIES__') {
+                        addEquippedAccessoriesToCart(true);
+                    } else if (reflexGame.pendingItemKey && PRODUCTS[reflexGame.pendingItemKey]) {
+                        addToCart(reflexGame.pendingItemKey, false, true);
+                        openCartDrawer();
+                    }
+                } else {
+                    reflexGame.round += 1;
+                    startReflexRound();
+                }
+            } else {
+                playGameTone(180, 0.18, 'sawtooth', 0.07);
+                showToast('❌ Wrong move! Match the highlighted pose!');
+            }
+        }
+
+        /* ==========================================================================
+           10. SHOPPING BAG & CHECKOUT FLOW (PLAY-TO-BUY GATED)
+           ========================================================================== */
+        function addToCart(itemKey, silent = false, bypassLock = false) {
+            const p = PRODUCTS[itemKey];
+            if (!p) return;
+
+            if (!playerStats.buyingUnlocked && !bypassLock) {
+                showToast('🔒 Play the 3-round Runway Challenge to unlock buying!');
+                openPlayToBuyGame(itemKey);
+                return;
+            }
+
+            // Ensure Unit-01 is wearing the product being sold
+            if (!p.equipped) {
+                p.equipped = true;
+                applyGearVisibility();
+                updateEquipButtons();
+            }
+
+            const existing = cart.find((i) => i.id === p.id && i.colorName === p.colorName);
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                cart.push({
+                    id: p.id,
+                    name: p.name,
+                    price: p.price,
+                    color: p.color,
+                    colorName: p.colorName,
+                    qty: 1
+                });
+            }
+            renderCart();
+            if (!silent) {
+                playGameTone(600, 0.09, 'sine', 0.07);
+                showToast(`Added ${p.name} (${p.colorName}) to Bag`);
+            }
+        }
+
+        function addEquippedAccessoriesToCart(bypassLock = false) {
+            const equippedAcc = ACCESSORY_KEYS.filter((k) => PRODUCTS[k].equipped);
+            if (equippedAcc.length === 0) {
+                showToast('Click at least one accessory above to equip it first!');
+                return;
+            }
+            if (!playerStats.buyingUnlocked && !bypassLock) {
+                showToast('🔒 Beat the quick Runway Challenge to buy equipped accessories!');
+                openPlayToBuyGame('__ACCESSORIES__');
+                return;
+            }
+            equippedAcc.forEach((k) => addToCart(k, true, true));
+            playGameTone(660, 0.12, 'triangle', 0.08);
+            showToast(`Added ${equippedAcc.length} equipped accessor${equippedAcc.length > 1 ? 'ies' : 'y'} to Bag!`);
+            openCartDrawer();
+        }
+
+        function addFullFitToCart(bypassLock = false) {
+            const equippedAll = Object.keys(PRODUCTS).filter((k) => PRODUCTS[k].equipped);
+            if (equippedAll.length === 0) {
+                showToast('Equip at least one item on Unit-01 first!');
+                return;
+            }
+            if (!playerStats.buyingUnlocked && !bypassLock) {
+                showToast('🔒 Play the Runway Challenge to unlock buying Unit-01\'s fit!');
+                openPlayToBuyGame('__FULL_FIT__');
+                return;
+            }
+            // Replace cart with Unit-01's exact current worn outfit so whatever stickman wears is what we sell
+            cart = equippedAll.map((k) => ({
+                id: PRODUCTS[k].id,
+                name: PRODUCTS[k].name,
+                price: PRODUCTS[k].price,
+                color: PRODUCTS[k].color,
+                colorName: PRODUCTS[k].colorName,
+                qty: 1
+            }));
+            renderCart();
+            playGameTone(680, 0.14, 'triangle', 0.08);
+            showToast(`Synced Unit-01's ${equippedAll.length} worn items to your Bag!`);
+            openCartDrawer();
+        }
+
+        function updateCartQty(idx, delta) {
+            if (!cart[idx]) return;
+            cart[idx].qty += delta;
+            if (cart[idx].qty <= 0) cart.splice(idx, 1);
+            renderCart();
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cart-items-container');
+            const badge = document.getElementById('cart-badge');
+            const subtotalEl = document.getElementById('cart-subtotal');
+            const checkoutBtn = document.getElementById('checkout-btn');
+            const discountRow = document.getElementById('coin-discount-row');
+            const discountAmtEl = document.getElementById('cart-discount-amount');
+            const discountCoinsEl = document.getElementById('discount-coins-used');
+
+            const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
+            const rawSubtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+            const maxDiscount = Math.floor(rawSubtotal * 0.4);
+            const coinDiscount = Math.min(maxDiscount, Math.floor(gameState.coins / 10));
+            const finalTotal = Math.max(0, rawSubtotal - coinDiscount);
+
+            badge.textContent = totalQty;
+            subtotalEl.textContent = `$${finalTotal}`;
+            checkoutBtn.disabled = cart.length === 0;
+
+            if (coinDiscount > 0 && cart.length > 0) {
+                discountRow.classList.remove('hidden');
+                discountRow.classList.add('flex');
+                discountCoinsEl.textContent = coinDiscount * 10;
+                discountAmtEl.textContent = `-$${coinDiscount}`;
+            } else {
+                discountRow.classList.add('hidden');
+                discountRow.classList.remove('flex');
+            }
+
+            if (cart.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 opacity-60">
+                        <div class="text-3xl mb-2">🛍️</div>
+                        <p class="text-sm">Your bag is empty.</p>
+                        <p class="text-xs mt-1">Try items on Unit-01 and add them here!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = cart.map((item, idx) => `
+                <div class="flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-white/5 border border-white/10">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <span class="w-8 h-8 rounded-xl shrink-0 border border-white/20" style="background:${item.color}"></span>
+                        <div class="min-w-0">
+                            <div class="font-display font-bold text-sm truncate">${item.name}</div>
+                            <div class="text-xs opacity-65">${item.colorName} • $${item.price}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <button onclick="updateCartQty(${idx}, -1)" class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 font-bold text-xs">−</button>
+                        <span class="w-6 text-center text-xs font-bold">${item.qty}</span>
+                        <button onclick="updateCartQty(${idx}, 1)" class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 font-bold text-xs">+</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openCartDrawer() {
+            document.getElementById('cart-backdrop').classList.remove('hidden');
+            document.getElementById('cart-drawer').classList.remove('translate-x-full');
+        }
+
+        function closeCartDrawer() {
+            document.getElementById('cart-backdrop').classList.add('hidden');
+            document.getElementById('cart-drawer').classList.add('translate-x-full');
+        }
+
+        function openCheckoutModal() {
+            if (cart.length === 0) return;
+            closeCartDrawer();
+            const rawSubtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+            const coinDiscount = Math.min(Math.floor(rawSubtotal * 0.4), Math.floor(gameState.coins / 10));
+            const subtotal = Math.max(0, rawSubtotal - coinDiscount);
+            if (coinDiscount > 0) {
+                gameState.coins = Math.max(0, gameState.coins - coinDiscount * 10);
+                document.getElementById('header-coins-badge').textContent = `${gameState.coins}🪙`;
+                if (gameState.active) renderGameHud();
+            }
+
+            const summary = document.getElementById('checkout-summary');
+            summary.innerHTML = cart.map((item) => `
+                <div class="flex justify-between">
+                    <span>${item.qty}x ${item.name} (${item.colorName})</span>
+                    <span class="font-semibold">$${item.price * item.qty}</span>
+                </div>
+            `).join('') + (coinDiscount > 0 ? `
+                <div class="flex justify-between text-volt">
+                    <span>Style Coins Discount</span>
+                    <span>-$${coinDiscount}</span>
+                </div>
+            ` : '') + `
+                <div class="border-t border-white/15 pt-2 mt-2 flex justify-between font-bold text-volt">
+                    <span>Total Paid</span>
+                    <span>$${subtotal}</span>
+                </div>
+            `;
+
+            const modal = document.getElementById('checkout-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            accessoryPoseOverride = null;
+            studioPose = 'dance';
+            spawn3DConfetti(stickman.root ? stickman.root.position.x : 0);
+            playGameTone(523.25, 0.1, 'triangle', 0.08);
+            setTimeout(() => playGameTone(783.99, 0.2, 'triangle', 0.09), 120);
+
+            cart = [];
+            renderCart();
+        }
+
+        function closeCheckoutModal() {
+            const modal = document.getElementById('checkout-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        let toastTimer = null;
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            if (!toast) return;
+            toast.textContent = msg;
+            toast.classList.remove('opacity-0', 'translate-y-3');
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-3');
+            }, 2600);
+        }
+
+        /* ==========================================================================
+           11. BOOTSTRAP ON WINDOW LOAD
+           ========================================================================== */
+        window.onload = function () {
+            try {
+                initThreeJS();
+                animate();
+            } catch (err) {
+                console.error('SOHAN STORE 3D Studio init error:', err);
+                showToast('3D Studio loaded in fallback mode.');
+            }
+        };
+    </script>
+</body>
+</html>
